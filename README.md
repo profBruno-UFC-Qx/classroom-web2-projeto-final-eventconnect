@@ -5,7 +5,7 @@ O EventConnect é uma plataforma de divulgação de eventos dos mais diversos ti
 ## :technologist: Membros da equipe
 
 * 535718 - Victor Emanuel De Sousa Costa - CC
-* XXXXXX - Jeferson Aires de Sousa - CC
+* 540428 - Jeferson Aires de Sousa - CC
 
 ## :people_holding_hands: Papéis ou tipos de usuário da aplicação
 
