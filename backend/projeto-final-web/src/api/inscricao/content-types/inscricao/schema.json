@@ -1,0 +1,28 @@
+{
+  "kind": "collectionType",
+  "collectionName": "inscricaos",
+  "info": {
+    "singularName": "inscricao",
+    "pluralName": "inscricaos",
+    "displayName": "Inscrição",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "evento": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::evento.evento",
+      "inversedBy": "inscricaos"
+    },
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "inscricaos"
+    }
+  }
+}
