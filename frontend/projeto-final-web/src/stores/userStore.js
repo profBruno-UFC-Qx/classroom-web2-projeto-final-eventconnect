@@ -19,7 +19,7 @@ export const useUserStore = defineStore('user', () => {
   const id = computed(() => (user.value?.id ?? 0).toString())
 
   function authenticaded(authUser, token) {
-    const roleName = authUser?.role?.name || "" // backend não manda role
+    const roleName = authUser?.role?.name || ""
 
     user.value = {
       id: authUser?.id ?? 0,

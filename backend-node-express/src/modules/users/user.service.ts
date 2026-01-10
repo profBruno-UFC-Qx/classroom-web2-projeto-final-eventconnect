@@ -55,7 +55,7 @@ export class UserService {
   }
 
   async login(payload: { email: string; password: string }) {
-    const email = payload.email.toLowerCase();
+    const email = payload.email;
 
     const user = await userRepository
       .createQueryBuilder("user")
