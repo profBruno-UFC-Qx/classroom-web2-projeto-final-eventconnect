@@ -7,10 +7,10 @@ export class Inscription {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => User, (user) => user.inscricaos, { nullable: false, onDelete: 'CASCADE' })
+  @ManyToOne(() => User, (user) => user.inscricoes, { nullable: false, onDelete: 'CASCADE' })
   user: User;
 
-  @ManyToOne(() => Event, (evento) => evento.inscricaos, { nullable: false, onDelete: 'CASCADE' })
+  @ManyToOne(() => Event, (evento) => evento.inscricoes, { nullable: false, onDelete: 'CASCADE' })
   evento: Event;
 
   @CreateDateColumn()

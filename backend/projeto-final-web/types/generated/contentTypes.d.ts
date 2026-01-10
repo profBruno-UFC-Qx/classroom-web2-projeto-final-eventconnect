@@ -43,7 +43,7 @@ export interface ApiEventoEvento extends Struct.CollectionTypeSchema {
     imagem: Schema.Attribute.Media<'images'> & Schema.Attribute.Required;
     descricao: Schema.Attribute.String;
     nome: Schema.Attribute.String & Schema.Attribute.Required;
-    inscricaos: Schema.Attribute.Relation<
+    inscricoes: Schema.Attribute.Relation<
       'oneToMany',
       'api::inscricao.inscricao'
     >;
@@ -66,10 +66,10 @@ export interface ApiEventoEvento extends Struct.CollectionTypeSchema {
 }
 
 export interface ApiInscricaoInscricao extends Struct.CollectionTypeSchema {
-  collectionName: 'inscricaos';
+  collectionName: 'inscricoes';
   info: {
     singularName: 'inscricao';
-    pluralName: 'inscricaos';
+    pluralName: 'inscricoes';
     displayName: 'Inscri\u00E7\u00E3o';
     description: '';
   };
@@ -567,7 +567,7 @@ export interface PluginUsersPermissionsUser
       'manyToOne',
       'plugin::users-permissions.role'
     >;
-    inscricaos: Schema.Attribute.Relation<
+    inscricoes: Schema.Attribute.Relation<
       'oneToMany',
       'api::inscricao.inscricao'
     >;

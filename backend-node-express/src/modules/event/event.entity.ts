@@ -26,7 +26,7 @@ export class Event {
   categoria: Category;
 
   @OneToMany(() => Inscription, (inscricao) => inscricao.evento)
-  inscricaos: Inscription[];
+  inscricoes: Inscription[];
 
   @CreateDateColumn()
   createdAt: Date;

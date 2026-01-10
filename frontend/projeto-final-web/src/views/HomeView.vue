@@ -60,7 +60,7 @@ function fecharConfirmModal() {
 async function inscreverSe(evento) {
   if (userStore.isAuthenticated) {
     try {
-      const { data } = await api.get(`/inscricaos`, {
+      const { data } = await api.get(`/inscricoes`, {
         params: {
           filters: {
             evento: { id: evento.id },
@@ -90,7 +90,7 @@ async function inscreverSe(evento) {
 
 async function confirmarInscricao() {
   try {
-    await api.post('/inscricaos', {
+    await api.post('/inscricoes', {
       data: {
         evento: { id: selectedEvento.value.id },
         user: { id: userStore.user.id }

@@ -6,7 +6,7 @@ export class UserService {
     const user = await userRepository.findOne({
       where: { id: userId },
       relations: {
-        inscricaos: {
+        inscricoes: {
           evento: {
             categoria: true
           }

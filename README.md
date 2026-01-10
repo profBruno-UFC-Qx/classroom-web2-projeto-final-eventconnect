@@ -61,10 +61,10 @@ O EventConnect é uma plataforma de divulgação de eventos dos mais diversos ti
 | `GET` | `/users/me` |
 | --- | --- |
 | INSCRIÇÕES | |  |
-| `GET` | `/inscricaos?filters[user][id][$eq]=${userStore.id}&populate[evento]=*&populate[user]=*'` |
-| `GET` | ``/inscricaos`` |
-| `POST` | `/inscricaos` |
-| `DELETE` | `/inscricaos/${selectedInscricao.value.documentId}` |
+| `GET` | `/inscricoes?filters[user][id][$eq]=${userStore.id}&populate[evento]=*&populate[user]=*'` |
+| `GET` | ``/inscricoes`` |
+| `POST` | `/inscricoes` |
+| `DELETE` | `/inscricoes/${selectedInscricao.value.documentId}` |
 | --- | --- |
 | EVENTOS | |  |
 | `GET` | `/eventos?populate=*` |

@@ -1,9 +1,9 @@
 {
   "kind": "collectionType",
-  "collectionName": "inscricaos",
+  "collectionName": "inscricoes",
   "info": {
     "singularName": "inscricao",
-    "pluralName": "inscricaos",
+    "pluralName": "inscricoes",
     "displayName": "Inscrição",
     "description": ""
   },
@@ -16,13 +16,13 @@
       "type": "relation",
       "relation": "manyToOne",
       "target": "api::evento.evento",
-      "inversedBy": "inscricaos"
+      "inversedBy": "inscricoes"
     },
     "user": {
       "type": "relation",
       "relation": "manyToOne",
       "target": "plugin::users-permissions.user",
-      "inversedBy": "inscricaos"
+      "inversedBy": "inscricoes"
     }
   }
 }

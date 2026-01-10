@@ -27,7 +27,7 @@
       "type": "string",
       "required": true
     },
-    "inscricaos": {
+    "inscricoes": {
       "type": "relation",
       "relation": "oneToMany",
       "target": "api::inscricao.inscricao",

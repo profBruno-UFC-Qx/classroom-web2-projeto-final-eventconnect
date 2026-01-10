@@ -6,7 +6,6 @@ export const UserSchema = z.object({
         .string()
         .min(3, 'Username deve ter no mínimo 3 caracteres'),
     email: z
-        .string()
         .email('Email inválido')
         .min(6, 'Email deve ter no mínimo 6 caracteres'),
     password: z

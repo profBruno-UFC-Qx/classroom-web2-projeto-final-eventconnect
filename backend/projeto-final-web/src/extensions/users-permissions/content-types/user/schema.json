@@ -65,7 +65,7 @@
       "inversedBy": "users",
       "configurable": false
     },
-    "inscricaos": {
+    "inscricoes": {
       "type": "relation",
       "relation": "oneToMany",
       "target": "api::inscricao.inscricao",

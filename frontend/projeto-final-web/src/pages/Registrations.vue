@@ -15,7 +15,7 @@ const showConfirmDeleteModal = ref(false)
 
 onMounted(async () => {
     try {
-        const { data } = await api.get(`/inscricaos?filters[user][id][$eq]=${userStore.id}&populate[evento]=*&populate[user]=*`, {
+        const { data } = await api.get(`/inscricoes?filters[user][id][$eq]=${userStore.id}&populate[evento]=*&populate[user]=*`, {
             headers: {
                 Authorization: `Bearer ${localStorage.getItem('jwt')}`
             }
@@ -39,7 +39,7 @@ function fecharConfirmDeleteModal() {
 
 async function confirmarDelecaoInscricao() {
     try {
-        await api.delete(`/inscricaos/${selectedInscricao.value.documentId}`, {
+        await api.delete(`/inscricoes/${selectedInscricao.value.documentId}`, {
             headers: {
                 Authorization: `Bearer ${localStorage.getItem('jwt')}`
             }

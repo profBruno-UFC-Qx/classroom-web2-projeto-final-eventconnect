@@ -37,5 +37,5 @@ export class User {
   updated_at: Date;
 
   @OneToMany(() => Inscription, (inscricao) => inscricao.user)
-  inscricaos: Inscription[];
+  inscricoes: Inscription[];
 }
