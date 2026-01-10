@@ -3,32 +3,31 @@ import { getMe } from "./user.controller.js";
 import { registry } from "../../docs/openapi.js";
 import { resSingleEntitySchema } from "../../shared/schemas.js";
 import { authMiddleware } from "../../middlewares/authMiddleware.js";
-import { UserSchema } from "./user.schema.js";
+import { UserPublicSchema } from "./user.schema.js";
 
 const userRouter = Router();
 
 registry.registerPath({
   method: "get",
   path: "/users/me",
-  description: "Retorna o perfil do usuário autenticado (Padrão Strapi)",
+  description: "Retorna o perfil do usuário autenticado",
   security: [{ bearerAuth: [] }],
   responses: {  
     200: {
       description: "Dados do usuário logado",
       content: {
         "application/json": {
-          schema: resSingleEntitySchema(UserSchema)
+          schema: resSingleEntitySchema(UserPublicSchema),
         }
       }
     },
     401: {
-      description: "Token inválido ou ausente"
+      description: "Token inválido ou ausente",
     }
   },
   tags: ["Users"]
 });
 
-
-userRouter.get('/me', authMiddleware, getMe);
+userRouter.get("/me", authMiddleware, getMe);
 
 export default userRouter;

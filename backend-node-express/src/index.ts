@@ -7,6 +7,7 @@ import { buildOpenAPIDocument } from "./docs/openapi.js";
 import { handlerError } from "./middlewares/errorMiddleware.js";
 import { AppDataSource } from './config/datasource.js';
 import userRouter from './modules/users/user.routes.js';
+import authRouter from "./modules/users/user.auth.routes.js";
 
 const app: Application = express();
 const PORT: number = 3001;
@@ -27,6 +28,7 @@ const openApiDocs = buildOpenAPIDocument();
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(openApiDocs));
 
 app.use('/users', userRouter);
+app.use('/auth', authRouter);
 
 app.get('/', (req: Request, res: Response) => {
     res.send({ message: 'API rodando com sucesso!' });

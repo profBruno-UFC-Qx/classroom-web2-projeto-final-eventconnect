@@ -6,12 +6,10 @@ export const UserSchema = z.object({
         .string()
         .min(3, 'Username deve ter no mínimo 3 caracteres'),
     email: z
-        .email('Email inválido')
-        .min(6, 'Email deve ter no mínimo 6 caracteres'),
+        .email('Email inválido'),
     password: z
         .string()
-        .min(6, 'A senha deve ter no mínimo 6 caracteres')
-        .optional(), 
+        .min(6, 'A senha deve ter no mínimo 6 caracteres'),
     provider: z.string().default('local'),
     confirmed: z.boolean().default(false),
     blocked: z.boolean().default(false),
@@ -20,4 +18,13 @@ export const UserSchema = z.object({
     updatedAt: z.coerce.date().optional(),
 });
 
+export const UserPublicSchema = UserSchema.omit({ password: true });
+
+export const LoginSchema = z.object({
+  email: z.email("Email inválido"),
+  password: z.string().min(6, "Senha é obrigatória"),
+});
+
 export type UserType = z.infer<typeof UserSchema>;
+export type UserPublicType = z.infer<typeof UserPublicSchema>;
+export type LoginType = z.infer<typeof LoginSchema>;

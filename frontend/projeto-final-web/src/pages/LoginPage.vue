@@ -31,29 +31,33 @@ async function authenticate() {
   try {
     loading.value = true
     exception.value = undefined
-    const { data } = await api.post('/auth/local', {
-      identifier: identifier.value,
+    const { data } = await api.post('/auth/login', {
+      email: identifier.value,
       password: password.value
     })
-    const { jwt } = data
+    const { jwt, user } = data.data
 
-    const res = await api.get('/users/me', {
-      headers: {
-        Authorization: `Bearer ${jwt}`
-      },
-      params: {
-        populate: 'role'
-      }
-    })
+    // const res = await api.get('/users/me', {
+    //   headers: {
+    //     Authorization: `Bearer ${jwt}`
+    //   },
+    //   params: {
+    //     populate: 'role'
+    //   }
+    // })
 
-    userStore.authenticaded(res.data, jwt)
+    // userStore.authenticaded(res.data, jwt)
+
+    userStore.authenticaded(user, jwt)
 
     router.push('/')
   } catch (e) {
     if (isAxiosError(e) && isApplicationError(e.response?.data)) {
-      toast.error('Erro de autenticação. Verifique seus dados e tente novamente.')
+      toast.error(e.response?.data?.error?.message || 'Erro de autenticação')
       exception.value = e.response?.data
+      return
     }
+    toast.error('Erro inesperado ao autenticar')
   } finally {
     loading.value = false
   }

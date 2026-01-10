@@ -29,13 +29,15 @@ async function register() {
   try {
     loading.value = true
     exception.value = undefined
-    const { data } = await api.post('/auth/local/register', {
+
+    const { data } = await api.post('/auth/register', {
       username: username.value,
       email: email.value,
       password: password.value,
     })
+
     console.log(data)
-    const { jwt, user } = data
+    const { jwt, user } = data.data
     userStore.authenticaded(user, jwt)
     router.push('/')
   } catch (e) {
