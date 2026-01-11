@@ -30,6 +30,9 @@ export class User {
   @Column({ default: false })
   blocked: boolean;
 
+  @Column({ default: "user" })
+  role: "user" | "Admin";
+
   @CreateDateColumn()
   created_at: Date;
 

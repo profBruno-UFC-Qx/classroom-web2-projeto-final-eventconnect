@@ -4,6 +4,8 @@ import { validateBody, validateParams } from '../../middlewares/zodMiddlewares.j
 import { createCategorySchema, updateCategorySchema } from './category.schema.js';
 import { registry } from '../../docs/openapi.js';
 import { idSchema, resCollectionEntitySchema, resSingleEntitySchema } from '../../shared/schemas.js';
+import { authMiddleware } from '../../middlewares/authMiddleware.js';
+import { requireAdminMiddleware } from '../../middlewares/requireAdminMiddleware.js';
 
 const categoryRouter = Router();
 
@@ -93,8 +95,30 @@ registry.registerPath({
 const categoryController = new CategoryController();
 
 categoryRouter.get('/', categoryController.index);
-categoryRouter.post('/', validateBody(createCategorySchema), categoryController.store);
-categoryRouter.put('/:id', validateParams(idSchema), validateBody(updateCategorySchema), categoryController.update);
-categoryRouter.delete('/:id', validateParams(idSchema), categoryController.delete);
+
+categoryRouter.post(
+  '/',
+  authMiddleware,
+  requireAdminMiddleware,
+  validateBody(createCategorySchema),
+  categoryController.store
+);
+
+categoryRouter.put(
+  '/:id',
+  authMiddleware,
+  requireAdminMiddleware,
+  validateParams(idSchema),
+  validateBody(updateCategorySchema),
+  categoryController.update
+);
+
+categoryRouter.delete(
+  '/:id',
+  authMiddleware,
+  requireAdminMiddleware,
+  validateParams(idSchema),
+  categoryController.delete
+);
 
 export default categoryRouter;

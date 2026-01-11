@@ -13,7 +13,7 @@ export const UserSchema = z.object({
     provider: z.string().default('local'),
     confirmed: z.boolean().default(false),
     blocked: z.boolean().default(false),
-    roleId: z.number().int().positive().optional(),
+    role: z.enum(["user", "Admin"]).default("user"),
     createdAt: z.coerce.date().optional(),
     updatedAt: z.coerce.date().optional(),
 });

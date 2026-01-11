@@ -44,6 +44,7 @@ export class UserService {
       provider: "local",
       confirmed: true,
       blocked: false,
+      role: "user",
     });
 
     const saved = await userRepository.save(user);
@@ -55,6 +56,10 @@ export class UserService {
   }
 
   async login(payload: { email: string; password: string }) {
+    if (!payload?.email || !payload?.password) {
+      throw new Error("Credenciais inválidas");
+    }
+
     const email = payload.email;
 
     const user = await userRepository
