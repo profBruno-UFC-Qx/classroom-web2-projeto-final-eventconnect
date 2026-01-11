@@ -4,6 +4,10 @@ export const idSchema = z.object({
   id: z.string().regex(/^\d+$/)
 })
 
+export const documentIdSchema = z.object({
+  documentId: z.string().regex(/^\d+$/)
+})
+
 export const resSingleEntitySchema = (schema: ZodType) => {
   return z.object({
     success: z.boolean(),

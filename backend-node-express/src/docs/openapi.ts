@@ -1,7 +1,15 @@
-import { OpenAPIRegistry, OpenApiGeneratorV3 } from "@asteasolutions/zod-to-openapi";
+import { OpenAPIRegistry, OpenApiGeneratorV3, extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
+import { z } from 'zod';
 
 export const registry = new OpenAPIRegistry();
 
+extendZodWithOpenApi(z);
+
+registry.registerComponent('securitySchemes', 'bearerAuth', {
+  type: 'http',
+  scheme: 'bearer',
+  bearerFormat: 'JWT',
+});
 
 export function buildOpenAPIDocument() {
   const generator = new OpenApiGeneratorV3(registry.definitions);
@@ -13,6 +21,7 @@ export function buildOpenAPIDocument() {
       description: 'API para gerenciamento de eventos e inscrições',
     },
     servers: [{ url: 'http://localhost:3001' }],
+    security: [{ bearerAuth: [] }],
   })
   return doc;
 }
