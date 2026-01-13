@@ -13,7 +13,11 @@ export class EventController {
   };
 
   show = async (req: Request, res: Response) => {
-    const id = Number(req.params.id);
+    const { id } = req.params;
+    if (!id) {
+      res.status(400).json({ message: "ID é obrigatório" });
+      return;
+    }
     const evento = await this.eventService.findById(id);
     if (evento) {
       res.json({
@@ -35,7 +39,11 @@ export class EventController {
   };
 
   update = async (req: Request, res: Response) => {
-    const id = Number(req.params.id);
+    const { id } = req.params;
+    if (!id) {
+      res.status(400).json({ message: "ID é obrigatório" });
+      return;
+    }
     const validatedData = updateEventSchema.parse(req.body);
     const evento = await this.eventService.update(id, validatedData);
 
@@ -51,7 +59,11 @@ export class EventController {
   };
 
   delete = async (req: Request, res: Response) => {
-    const id = Number(req.params.id);
+    const { id } = req.params;
+    if (!id) {
+      res.status(400).json({ message: "ID é obrigatório" });
+      return;
+    }
     try {
       await this.eventService.delete(id);
       res.status(204).json();

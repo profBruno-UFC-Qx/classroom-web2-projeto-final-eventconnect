@@ -11,6 +11,7 @@ import userRouter from './modules/users/user.routes.js';
 import authRouter from "./modules/users/user.auth.routes.js";
 import eventRouter from "./modules/event/event.routes.js";
 import categoryRouter from "./modules/category/category.routes.js";
+import inscriptionRouter from "./modules/inscription/inscription.routes.js";
 
 const app: Application = express();
 const PORT: number = 3001;
@@ -34,6 +35,7 @@ app.use('/users', userRouter);
 app.use('/auth', authRouter);
 app.use('/eventos', eventRouter);
 app.use('/categorias', categoryRouter);
+app.use('/inscricoes', inscriptionRouter);
 
 app.get('/', (req: Request, res: Response) => {
     res.send({ message: 'API rodando com sucesso!' });

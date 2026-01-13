@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { userRepository } from "../modules/users/user.repository.js";
 
 interface AuthRequest extends Request {
-  user?: { id: number };
+  user?: { id: string };
 }
 
 export const requireAdminMiddleware = async (req: Request, res: Response, next: NextFunction) => {

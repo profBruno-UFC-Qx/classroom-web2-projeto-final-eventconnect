@@ -4,7 +4,7 @@ import { UserSchema, LoginSchema } from "./user.schema.js";
 
 interface AuthRequest extends Request {
   user: {
-    id: number;
+    id: string;
   };
 }
 
@@ -13,16 +13,15 @@ const userService = new UserService();
 export const getMe = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authReq = req as AuthRequest;
-    
-    const userId = authReq.user.id; 
+    const userId = authReq.user.id;
     const user = await userService.getMe(userId);
-    
+
     return res.json({
       success: true,
       data: user
     });
   } catch (error: any) {
-    next(error); 
+    next(error);
   }
 };
 
@@ -33,7 +32,7 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
 
     return res.status(201).json({
       success: true,
-      data: result, // { jwt, user }
+      data: result,
     });
   } catch (error: any) {
     next(error);

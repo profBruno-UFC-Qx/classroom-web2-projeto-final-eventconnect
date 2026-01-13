@@ -5,7 +5,7 @@ export class CategoryService {
         return categoryRepository.find();
     }
 
-    async findById(id: number) {
+    async findById(id: string) {
         return categoryRepository.findOne({ where: { id } });
     }
 
@@ -14,7 +14,7 @@ export class CategoryService {
         return categoryRepository.save(categoria);
     }
 
-    async update(id: number, data: any) {
+    async update(id: string, data: any) {
         const categoria = await categoryRepository.findOneBy({ id });
 
         if (!categoria) {
@@ -25,7 +25,7 @@ export class CategoryService {
         return categoryRepository.save(categoria);
     }
 
-    async delete(id: number) {
+    async delete(id: string) {
         const categoria = await categoryRepository.findOneBy({ id });
 
         if (!categoria) {

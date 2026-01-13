@@ -4,8 +4,8 @@ import { Inscription } from "../inscription/inscription.entity.js";
 
 @Entity("event")
 export class Event {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn("uuid")
+  id: string;
 
   @Column()
   nome: string;

@@ -6,7 +6,7 @@ import jwt from "jsonwebtoken";
 const JWT_SECRET = process.env.JWT_SECRET || "sua_chave_secreta_aqui";
 
 export class UserService {
-  async getMe(userId: number): Promise<User> {
+  async getMe(userId: string): Promise<User> {
     const user = await userRepository.findOne({
       where: { id: userId },
       relations: {

@@ -12,13 +12,10 @@ export class EventService {
     });
   }
 
-  async findById(id: number) {
+  async findById(id: string) {
     return eventRepository.findOne({
       where: { id },
-      relations: {
-        categoria: true,
-        inscricoes: true,
-      },
+      relations: { categoria: true, inscricoes: true },
     });
   }
 
@@ -45,7 +42,7 @@ export class EventService {
     return eventRepository.save(event);
   }
 
-  async update(id: number, data: any) {
+  async update(id: string, data: any) {
     const event = await eventRepository.findOneBy({ id });
 
     if (!event) {
@@ -70,7 +67,7 @@ export class EventService {
     return eventRepository.save(event);
   }
 
-  async delete(id: number) {
+  async delete(id: string) {
     const event = await eventRepository.findOneBy({ id });
 
     if (!event) {

@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 
 interface AuthRequest extends Request {
     user?: {
-        id: number;
+        id: string;
     };
 }
 
@@ -32,10 +32,10 @@ export const authMiddleware = (req: AuthRequest, res: Response, next: NextFuncti
     }
 
     try {
-        const decoded = jwt.verify(token as string, JWT_SECRET) as unknown as { id: number };
+        const decoded = jwt.verify(token as string, JWT_SECRET) as unknown as { id: string };
 
         req.user = {
-            id: decoded.id,
+            id: String(decoded.id),
         };
 
         return next();

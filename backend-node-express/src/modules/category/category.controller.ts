@@ -11,7 +11,11 @@ export class CategoryController {
     };
 
     show = async (req: Request, res: Response) => {
-        const id = Number(req.params.id);
+        const { id } = req.params;
+        if (!id) {
+            res.status(400).json({ message: "ID é obrigatório" });
+            return;
+        }
         const categoria = await this.categoryService.findById(id);
         if (categoria) {
             res.json({ data: categoria });
@@ -27,7 +31,11 @@ export class CategoryController {
     };
 
     update = async (req: Request, res: Response) => {
-        const id = Number(req.params.id);
+        const { id } = req.params;
+        if (!id) {
+            res.status(400).json({ message: "ID é obrigatório" });
+            return;
+        }
         const validated = updateCategorySchema.parse(req.body.data ?? req.body);
         try {
             const categoria = await this.categoryService.update(id, validated);
@@ -38,7 +46,11 @@ export class CategoryController {
     };
 
     delete = async (req: Request, res: Response) => {
-        const id = Number(req.params.id);
+        const { id } = req.params;
+        if (!id) {
+            res.status(400).json({ message: "ID é obrigatório" });
+            return;
+        }
         try {
             await this.categoryService.delete(id);
             res.status(204).json();

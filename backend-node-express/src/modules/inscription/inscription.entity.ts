@@ -4,8 +4,8 @@ import { Event } from "../event/event.entity.js"
 
 @Entity("inscription")
 export class Inscription {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn("uuid")
+  id: string;
 
   @ManyToOne(() => User, (user) => user.inscricoes, { nullable: false, onDelete: 'CASCADE' })
   user: User;

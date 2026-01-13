@@ -1,7 +1,8 @@
 import { z, ZodType } from 'zod'
+import { Request } from "express";
 
 export const idSchema = z.object({
-  id: z.string().regex(/^\d+$/)
+  id: z.string().uuid({ message: "ID deve ser um UUID válido" })
 })
 
 export const documentIdSchema = z.object({
@@ -20,4 +21,9 @@ export const resCollectionEntitySchema = (schema: ZodType) => {
     success: z.boolean(),
     data: z.array(schema)
   })
+}
+export interface AuthRequest extends Request {
+  user: {
+    id: string;
+  };
 }
