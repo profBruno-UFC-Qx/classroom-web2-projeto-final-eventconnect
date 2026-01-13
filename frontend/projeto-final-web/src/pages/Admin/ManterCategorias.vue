@@ -12,7 +12,7 @@ const formSubmitted = ref(false)
 
 onMounted(async () => {
     try {
-        const { data } = await api.get('/categorias?populate=*', {
+        const { data } = await api.get('/categorias', {
             headers: {
                 Authorization: `Bearer ${localStorage.getItem('jwt')}`
             }

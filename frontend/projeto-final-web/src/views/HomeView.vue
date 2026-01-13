@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { api } from '@/api'
 import { useUserStore } from '@/stores/userStore'
 import { format, isBefore } from "date-fns"
@@ -10,21 +10,59 @@ const eventos = ref([])
 const loading = ref(true)
 const userStore = useUserStore()
 const search = ref('')
+const categoryId = ref('')
+const startDate = ref('')
+const endDate = ref('')
+const categorias = ref([])
+const defaultImage = 'https://placehold.co/600x400?text=Sem+Imagem'
+const page = ref(1)
+const limit = ref(6)
+const totalPages = ref(1)
 
-const filteredEventos = computed(() => {
-  return eventos.value.filter(evento => 
-    evento.nome.toUpperCase().includes(search.value.toUpperCase()) || evento.categoria.nome.toUpperCase().includes(search.value.toUpperCase())
-  )
-})
+function handleImageError(event) {
+  event.target.src = defaultImage
+}
 
-onMounted(async () => {
+async function fetchEventos() {
+  loading.value = true
   try {
-    const { data } = await api.get('/eventos?populate=*')
+    const params = {
+      page: page.value,
+      limit: limit.value,
+      search: search.value,
+      categoryId: categoryId.value,
+      startDate: startDate.value,
+      endDate: endDate.value
+    }
+    const { data } = await api.get('/eventos', { params })
     eventos.value = data.data
+    totalPages.value = data.meta.totalPages
   } catch (error) {
     console.error(error)
   } finally {
     loading.value = false
+  }
+}
+
+function applyFilters() {
+  page.value = 1
+  fetchEventos()
+}
+
+function changePage(newPage) {
+  if (newPage >= 1 && newPage <= totalPages.value) {
+    page.value = newPage
+    fetchEventos()
+  }
+}
+
+onMounted(async () => {
+  try {
+    const { data: cats } = await api.get('/categorias')
+    categorias.value = cats.data
+    await fetchEventos()
+  } catch (error) {
+    console.error(error)
   }
 })
 
@@ -69,12 +107,6 @@ async function inscreverSe(evento) {
           Authorization: `Bearer ${localStorage.getItem('jwt')}`
         }
       });
-
-      if (data.data.length > 0) {
-        toast.warning('Você já está inscrito neste evento.')
-        return
-      }
-
       abrirConfirmModal(evento)
 
     } catch (error) {
@@ -107,37 +139,112 @@ async function confirmarInscricao() {
 </script>
 
 <template>
-  <main>
+  <main class="bg-light min-vh-100 pb-5">
     <ToastManager />
 
-    <div v-if="!loading" class="container mt-4">
-      <h1 class="text-center mb-4">Eventos</h1>
-      <div class="input-group mb-3">
-        <input v-model="search" type="text" class="form-control" placeholder="Pesquisar eventos pela categoria ou pelo nome..." aria-label="Pesquisar eventos...">
+    <div class="bg-white border-bottom py-5 mb-4">
+      <div class="container text-center">
+        <h1 class="display-5 fw-bold text-dark">Descubra Eventos</h1>
+        <p class="lead text-muted">Encontre as melhores experiências perto de você.</p>
       </div>
-      <div class="row">
-        <div class="col-lg-4 col-md-6" v-for="evento in filteredEventos" :key="evento.id">
-          <div class="card mb-4">
-            <img :src="evento.imagem" class="img-fluid card-img-top" alt="Imagem do Evento" style="height: 18.75rem;object-fit: cover;object-position: center;">
-            <div class="card-body d-flex flex-column justify-content-between" style="height: 250px;">
-              <h5 class="card-title text-center fw-bold">{{ evento.nome }}</h5>
-              <p class="card-text">{{ evento.descricao }}</p>
-              <div>
-                <p
-                :class="{'text-danger': isBefore(new Date(evento.data), new Date())}" 
-                class="card-text fs-5"
-                >Data: {{ format(new Date(evento.data), 'dd/MM/yyyy HH:mm') }}</p>
-                <p class="card-text fs-5">Categoria: <span class="badge text-bg-secondary">{{ evento.categoria?.nome }}</span></p>
-                <p v-if="isBefore(new Date(evento.data), new Date())" class="text-danger fw-bold">Evento encerrado</p>
-              </div>
+    </div>
+
+    <div v-if="!loading" class="container">
+      <div class="card border-0 shadow-sm mb-5">
+        <div class="card-body p-4">
+          <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+              <label class="form-label small fw-bold">O que você procura?</label>
+              <input v-model="search" type="text" class="form-control" placeholder="Ex: Workshop de Vue.js" @keyup.enter="applyFilters">
             </div>
-            <div class="card-footer d-flex justify-content-between align-items-center">
-              <button class="btn btn-primary" @click="abrirModal(evento)">Detalhes</button>
-              <button v-if="userStore.isAuthenticated && userStore.role !== 'Admin' && !isBefore(new Date(evento.data), new Date())" class="btn btn-secondary" @click="inscreverSe(evento)">Inscrever-se</button>
+            <div class="col-md-2">
+              <label class="form-label small fw-bold">Categoria</label>
+              <select v-model="categoryId" class="form-select" @change="applyFilters">
+                <option value="">Todas</option>
+                <option v-for="cat in categorias" :key="cat.id" :value="cat.id">{{ cat.nome }}</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label small fw-bold">Início</label>
+              <input v-model="startDate" type="date" class="form-control" @change="applyFilters">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label small fw-bold">Fim</label>
+              <input v-model="endDate" type="date" class="form-control" @change="applyFilters">
+            </div>
+            <div class="col-md-2">
+              <button class="btn btn-primary w-100 fw-bold py-2" @click="applyFilters">
+                <i class="bi bi-search me-2"></i>Filtrar
+              </button>
             </div>
           </div>
         </div>
       </div>
+
+      <div class="row">
+        <div class="col-lg-4 col-md-6 mb-4" v-for="evento in eventos" :key="evento.id">
+          <div class="card h-100 border-0 shadow-sm hover-card">
+            <div class="position-relative">
+              <img :src="evento.imagem || defaultImage" @error="handleImageError" class="card-img-top custom-card-img" alt="Imagem do Evento">
+              <span class="badge position-absolute top-0 end-0 m-3 p-2 shadow-sm" 
+                    :class="isBefore(new Date(evento.data), new Date()) ? 'text-bg-danger' : 'text-bg-primary'">
+                {{ evento.categoria?.nome }}
+              </span>
+            </div>
+            
+            <div class="card-body d-flex flex-column">
+              <h5 class="card-title fw-bold mb-3">{{ evento.nome }}</h5>
+              <p class="card-text text-muted flex-grow-1 text-truncate-2">{{ evento.descricao }}</p>
+              
+              <div class="mt-3 border-top pt-3">
+                <div class="d-flex align-items-center mb-2">
+                  <span class="small" :class="isBefore(new Date(evento.data), new Date()) ? 'text-danger fw-bold' : 'text-muted'">
+                    <i class="bi bi-calendar-event me-2"></i>
+                    {{ format(new Date(evento.data), 'dd/MM/yyyy HH:mm') }}
+                  </span>
+                </div>
+                <div v-if="isBefore(new Date(evento.data), new Date())" class="badge bg-danger-subtle text-danger border border-danger-subtle w-100 py-2">
+                  Inscrições Encerradas
+                </div>
+              </div>
+            </div>
+
+            <div class="card-footer bg-transparent border-0 pb-3 d-flex gap-2">
+              <button class="btn btn-outline-primary flex-grow-1" @click="abrirModal(evento)">Ver Detalhes</button>
+              <button v-if="userStore.isAuthenticated && userStore.role !== 'Admin' && !isBefore(new Date(evento.data), new Date())" 
+                      class="btn btn-primary flex-grow-1" 
+                      @click="inscreverSe(evento)">
+                Inscrever-se
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="totalPages > 1" class="d-flex justify-content-center mt-4 mb-5">
+        <nav aria-label="Navegação de página">
+          <ul class="pagination">
+            <li class="page-item" :class="{ disabled: page === 1 }">
+              <button class="page-link" @click="changePage(page - 1)" aria-label="Anterior">
+                <span aria-hidden="true">&laquo;</span>
+              </button>
+            </li>
+            <li class="page-item disabled">
+              <span class="page-link text-dark">Página {{ page }} de {{ totalPages }}</span>
+            </li>
+            <li class="page-item" :class="{ disabled: page === totalPages }">
+              <button class="page-link" @click="changePage(page + 1)" aria-label="Próximo">
+                <span aria-hidden="true">&raquo;</span>
+              </button>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+    
+    <div v-if="loading" class="d-flex flex-column align-items-center justify-content-center mt-5">
+      <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;"></div>
+      <p class="text-muted">Buscando os melhores eventos...</p>
     </div>
 
     <div v-if="loading" class="d-flex align-items-center justify-content-center mt-5">
@@ -154,7 +261,7 @@ async function confirmarInscricao() {
             <button type="button" class="btn-close" @click="fecharModal"></button>
           </div>
           <div class="modal-body">
-            <img :src="selectedEvento.imagem" class="img-fluid mb-3" alt="Imagem do Evento">
+            <img :src="selectedEvento.imagem || defaultImage" @error="handleImageError" class="img-fluid mb-3" alt="Imagem do Evento">
             <p
             :class="{'text-danger': isBefore(new Date(selectedEvento.data), new Date())}" 
             ><strong>Data:</strong> {{ format(new Date(selectedEvento.data), 'dd/MM/yyyy HH:mm') }}</p>
@@ -188,13 +295,45 @@ async function confirmarInscricao() {
       </div>
     </div>
 
-
-  </main>
+    </main>
 </template>
 
 
-<style>
-.modal-backdrop {
-  display: none;
+<style scoped>
+.hover-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
-</style>
+
+.hover-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+}
+
+.custom-card-img {
+  height: 220px;
+  object-fit: cover;
+  border-radius: 8px 8px 0 0;
+}
+
+.text-truncate-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;  
+  overflow: hidden;
+}
+
+.modal.show.d-block {
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  border: none;
+  border-radius: 15px;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+}
+
+.form-label {
+  color: #495057;
+  margin-bottom: 0.25rem;
+}
+</style>    

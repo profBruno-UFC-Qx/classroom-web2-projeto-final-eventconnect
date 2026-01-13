@@ -6,9 +6,30 @@ export class EventController {
   constructor(protected eventService: EventService = new EventService()) { }
 
   index = async (req: Request, res: Response) => {
-    const eventos = await this.eventService.findAll();
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const search = req.query.search as string;
+    const categoryId = req.query.categoryId as string;
+    const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
+    const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
+
+    const { data, total } = await this.eventService.findAll({
+      page,
+      limit,
+      search,
+      categoryId,
+      startDate,
+      endDate
+    });
+
     res.json({
-      data: eventos,
+      data,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
     });
   };
 

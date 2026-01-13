@@ -27,7 +27,7 @@ const previewImageUrl = ref(null);
 
 onMounted(async () => {
     try {
-        const { data } = await api.get('/eventos?populate=*', {
+        const { data } = await api.get('/eventos', {
             headers: {
                 Authorization: `Bearer ${localStorage.getItem('jwt')}`
             }
@@ -134,7 +134,7 @@ const submitForm = async (id) => {
                 },
             })
 
-            const { data } = await api.get('/eventos?populate=*', {
+            const { data } = await api.get('/eventos', {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('jwt')}`
                 }
@@ -157,7 +157,7 @@ const submitForm = async (id) => {
                 },
             })
 
-            const { data } = await api.get('/eventos?populate=*', {
+            const { data } = await api.get('/eventos', {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('jwt')}`
                 }

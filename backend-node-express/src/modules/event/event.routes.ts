@@ -17,6 +17,14 @@ registry.registerPath({
       method: "get",
       path: "/eventos",
   description: "Retorna todos os eventos",
+  parameters: [
+    { name: "page", in: "query", schema: { type: "integer", default: 1 } },
+    { name: "limit", in: "query", schema: { type: "integer", default: 10 } },
+    { name: "search", in: "query", schema: { type: "string" } },
+    { name: "categoryId", in: "query", schema: { type: "string" } },
+    { name: "startDate", in: "query", schema: { type: "string", format: "date-time" } },
+    { name: "endDate", in: "query", schema: { type: "string", format: "date-time" } }
+  ],
   responses: {
     200: {
       description: "Lista de eventos",

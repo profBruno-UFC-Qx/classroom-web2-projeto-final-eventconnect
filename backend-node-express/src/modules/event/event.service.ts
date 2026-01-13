@@ -1,15 +1,61 @@
 import { eventRepository } from "./event.repository";
 import { AppDataSource } from "../../config/datasource";
 import { Category } from "../category/category.entity";
+import { Between, ILike, LessThanOrEqual, MoreThanOrEqual, type FindOptionsWhere } from "typeorm";
+import { Event } from "./event.entity";
+
+interface FindAllParams {
+  page: number;
+  limit: number;
+  search?: string | undefined;
+  categoryId?: string | undefined;
+  startDate?: Date | undefined;
+  endDate?: Date | undefined;
+}
 
 export class EventService {
-  async findAll() {
-    return eventRepository.find({
+  async findAll({ page, limit, search, categoryId, startDate, endDate }: FindAllParams) {
+    const skip = (page - 1) * limit;
+
+    const where: FindOptionsWhere<Event> = {};
+
+    if (categoryId) {
+      where.categoria = { id: categoryId };
+    }
+
+    if (startDate && !isNaN(startDate.getTime())) {
+      if (endDate && !isNaN(endDate.getTime())) {
+        where.data = Between(startDate, endDate);
+      } else {
+        where.data = MoreThanOrEqual(startDate);
+      }
+    } else if (endDate && !isNaN(endDate.getTime())) {
+      where.data = LessThanOrEqual(endDate);
+    }
+
+    let finalWhere: FindOptionsWhere<Event> | FindOptionsWhere<Event>[] = where;
+
+    if (search) {
+      const searchLike = ILike(`%${search}%`);
+      finalWhere = [
+        { ...where, nome: searchLike },
+        { ...where, descricao: searchLike },
+      ];
+    }
+
+    const [data, total] = await eventRepository.findAndCount({
       relations: {
         categoria: true,
         inscricoes: true,
       },
+      where: finalWhere,
+      skip,
+      take: limit,
+      order: {
+        data: "ASC"
+      }
     });
+    return { data, total };
   }
 
   async findById(id: string) {
