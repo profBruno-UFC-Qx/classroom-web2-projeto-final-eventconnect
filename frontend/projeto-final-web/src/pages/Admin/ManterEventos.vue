@@ -14,7 +14,7 @@ const eventos = ref([])
 const eventoToDelete = ref({})
 const eventoToEdit = ref({})
 
-const imagem = ref()
+const imagem = ref('')
 const nome = ref('')
 const descricao = ref('')
 const endereco = ref('')
@@ -66,14 +66,14 @@ const openDeleteModal = (evento) => {
     eventoToDelete.value = evento
 }
 
-const deleteEvent = async (documentId) => {
+const deleteEvent = async (id) => {
     try {
-        await api.delete(`/eventos/${documentId}`, {
+        await api.delete(`/eventos/${id}`, {
             headers: {
                 Authorization: `Bearer ${localStorage.getItem('jwt')}`
             }
         });
-        eventos.value = eventos.value.filter(evento => evento.documentId !== documentId);
+        eventos.value = eventos.value.filter(evento => evento.id !== id);
         toast.success('Evento excluído com sucesso!')
     } catch (error) {
         console.error('Erro ao deletar o evento:', error);
@@ -87,7 +87,7 @@ const openCreateModal = () => {
     descricao.value = ''
     endereco.value = ''
     dataEvento.value = ''
-    imagem.value = null;
+    imagem.value = '';
     previewImageUrl.value = null;
     formSubmitted.value = false
     eventoToEdit.value = {}
@@ -100,73 +100,35 @@ const openEditModal = (evento) => {
     descricao.value = evento.descricao
     endereco.value = evento.endereco
     dataEvento.value = format(new Date(evento.data), "yyyy-MM-dd'T'HH:mm")
-    categoriaSelecionada.value = evento.categoria.documentId
+    categoriaSelecionada.value = evento.categoria.id
 
-    if (evento.imagem) {
-        previewImageUrl.value = uploadHelper(evento.imagem?.url);
-    } else {
-        previewImageUrl.value = null;
-    }
-}
-
-function handleUpload(event) {
-  const inputEvent = event 
-  const target = inputEvent.target
-  imagem.value = target.files?.item(0)
-
-  if (imagem.value) {
-    previewImageUrl.value = URL.createObjectURL(imagem.value);
-  }
-}
-
-const uploadImage = async (file) => {
-    const formData = new FormData();
-    formData.append('files', file);
-
-    try {
-        const response = await api.post('/upload', formData, {
-            headers: {
-                Authorization: `Bearer ${localStorage.getItem('jwt')}`,
-            },
-        });
-        return response.data[0];
-    } catch (error) {
-        console.error('Erro ao enviar a imagem:', error);
-        return null;
-    }
+    imagem.value = evento.imagem || '';
+    previewImageUrl.value = evento.imagem || null;
 }
 
 
 const submitForm = async (id) => {
     formSubmitted.value = true;
-    if (!nome.value || !descricao.value || !endereco.value || !dataEvento.value || !categoriaSelecionada.value) {
+    if (!nome.value || !descricao.value || !endereco.value || !dataEvento.value || !categoriaSelecionada.value || !imagem.value) {
         return;
     }
 
     const modal = bootstrap.Modal.getInstance(document.getElementById('createEventoModal'))
 
+    const payload = {
+        nome: nome.value,
+        descricao: descricao.value,
+        endereco: endereco.value,
+        data: dataEvento.value,
+        categoriaId: categoriaSelecionada.value,
+        imagem: imagem.value
+    }
+
     if (id) {
         console.log('Editar evento', eventoToEdit.value)
 
-        const datas = new FormData()
-        datas.append('data[nome]', nome.value)
-        datas.append('data[descricao]', descricao.value)
-        datas.append('data[endereco]', endereco.value)
-        datas.append('data[data]', dataEvento.value)
-        datas.append('data[categoria]', categoriaSelecionada.value)
-
-        if (imagem.value) {
-            console.log('adicionar imagem...')
-            try {
-                const uploadedImage = await uploadImage(imagem.value)
-                datas.append('data[imagem]', uploadedImage.id)
-            } catch (error) {
-                console.error('Erro ao enviar a imagem:', error)
-            }
-        }
-
         try {
-            const evento = await api.put(`/eventos/${id}`, datas, {
+            const evento = await api.put(`/eventos/${id}`, payload, {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('jwt')}`,
                 },
@@ -187,22 +149,9 @@ const submitForm = async (id) => {
         }
     }else{
         console.log('Criar evento', nome.value)
-        const uploadedImage = await uploadImage(imagem.value)
-
-        if (!uploadedImage) {
-            return
-        }
-
-        const datas = new FormData()
-        datas.append('data[nome]', nome.value)
-        datas.append('data[descricao]', descricao.value)
-        datas.append('data[endereco]', endereco.value)
-        datas.append('data[data]', dataEvento.value)
-        datas.append('data[categoria]', categoriaSelecionada.value)
-        datas.append('data[imagem]', uploadedImage.id)
 
         try {
-            const evento = await api.post('/eventos', datas, {
+            const evento = await api.post('/eventos', payload, {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('jwt')}`,
                 },
@@ -258,7 +207,7 @@ const submitForm = async (id) => {
                     <th scope="row">{{ index + 1 }}</th>
                     <td class="d-none d-md-table-cell">
                     <img v-if="evento.imagem" 
-                        :src="uploadHelper(evento.imagem?.url)" 
+                        :src="evento.imagem" 
                         alt="Imagem do evento" 
                         style="width: 100px; height: auto;" />
                     </td>
@@ -282,8 +231,8 @@ const submitForm = async (id) => {
             <div class="card-body">
                 <h5 class="card-title">Nenhum evento encontrado</h5>
             </div>
-            <div class="card-footer">
-                <button class="btn btn-primary" @click="openCreateModal()">Cadastrar evento</button>
+            <div class="card-footer">   
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createEventoModal" @click="openCreateModal()">Cadastrar evento</button>
             </div>
         </div>
     </div>
@@ -298,17 +247,17 @@ const submitForm = async (id) => {
                 <div class="modal-body">
                     <form>
                         <div class="mb-3">
-                            <img v-if="previewImageUrl" :src="previewImageUrl" alt="Imagem do evento" class="img-fluid mb-3" />
-                            <label for="coverInput" class="form-label">Imagem</label>
+                            <img v-if="imagem" :src="imagem" alt="Imagem do evento" class="img-fluid mb-3" />
+                            <label for="coverInput" class="form-label">URL da Imagem</label>
                             <input
-                                @change="handleUpload"
-                                type="file"
+                                type="text"
+                                v-model="imagem"
                                 id="coverInput"
-                                accept="image/*"
+                                placeholder="https://exemplo.com/imagem.png"
                                 class="form-control"
-                                :class="{ 'is-invalid': formSubmitted && !imagem && !previewImageUrl }"
+                                :class="{ 'is-invalid': formSubmitted && !imagem }"
                             />
-                            <div v-if="formSubmitted && !imagem && !previewImageUrl" class="invalid-feedback">O imagem do evento é obrigatório.</div>
+                            <div v-if="formSubmitted && !imagem" class="invalid-feedback">A URL da imagem do evento é obrigatória.</div>
                             
                         </div>
                         <div class="mb-3">
@@ -335,7 +284,7 @@ const submitForm = async (id) => {
                             <label for="eventoCategoria" class="form-label">Categoria</label>
                             <select v-model="categoriaSelecionada" id="eventoCategoria" class="form-select" :class="{ 'is-invalid': formSubmitted && !categoriaSelecionada }">
                                 <option value="" disabled>Selecione uma categoria...</option>
-                                <option v-for="categoria in categorias" :key="categoria.documentId" :value="categoria.documentId">
+                                <option v-for="categoria in categorias" :key="categoria.id" :value="categoria.id">
                                     {{ categoria.nome }}
                                 </option>
                             </select>
@@ -345,8 +294,8 @@ const submitForm = async (id) => {
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button v-if="!eventoToEdit.documentId" type="button" class="btn btn-primary" @click="submitForm()">Cadastrar</button>
-                    <button v-if="eventoToEdit.documentId" type="button" class="btn btn-primary" @click="submitForm(eventoToEdit.documentId)">Salvar alterações</button>
+                    <button v-if="!eventoToEdit.id" type="button" class="btn btn-primary" @click="submitForm()">Cadastrar</button>
+                    <button v-if="eventoToEdit.id" type="button" class="btn btn-primary" @click="submitForm(eventoToEdit.id)">Salvar alterações</button>
                 </div>
             </div>
         </div>
@@ -364,7 +313,7 @@ const submitForm = async (id) => {
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal" @click="deleteEvent(eventoToDelete.documentId)">Excluir</button>
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal" @click="deleteEvent(eventoToDelete.id)">Excluir</button>
                 </div>
             </div>
         </div>

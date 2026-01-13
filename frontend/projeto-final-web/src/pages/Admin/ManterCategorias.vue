@@ -29,7 +29,7 @@ onMounted(async () => {
 
     createModalEl.addEventListener('hidden.bs.modal', () => {
         console.log('Modal foi fechada!')
-        if (!categoriaToEdit.value || !categoriaToEdit.value.documentId) {
+        if (!categoriaToEdit.value || !categoriaToEdit.value.id) {
             nomeCategoria.value = ''
             formSubmitted.value = false
         }
@@ -41,14 +41,14 @@ const openDeleteModal = (categoria) => {
     categoriaToDelete.value = categoria
 }
 
-const deleteEvent = async (documentId) => {
+const deleteEvent = async (id) => {
     try {
-        await api.delete(`/categorias/${documentId}`, {
+        await api.delete(`/categorias/${id}`, {
             headers: {
                 Authorization: `Bearer ${localStorage.getItem('jwt')}`
             }
         })
-        categorias.value = categorias.value.filter(evento => evento.documentId !== documentId)
+        categorias.value = categorias.value.filter(evento => evento.id !== id)
     } catch (error) {
         console.error('Erro ao deletar o evento:', error)
     }
@@ -86,7 +86,7 @@ const submitForm = async (id) => {
                 }
             })
             console.log(data)
-            const index = categorias.value.findIndex(categoria => categoria.documentId === id)
+            const index = categorias.value.findIndex(categoria => categoria.id === id)
             categorias.value[index] = data.data
             modal.hide()
         } catch (error) {
@@ -97,9 +97,7 @@ const submitForm = async (id) => {
 
         try {
             const categoria = await api.post('/categorias', {
-                data: {
-                    nome: nomeCategoria.value
-                }
+                nome: nomeCategoria.value
             }, {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('jwt')}`
@@ -140,7 +138,7 @@ const submitForm = async (id) => {
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="(categoria, index) in categorias" :key="categoria.documentId">
+                <tr v-for="(categoria, index) in categorias" :key="categoria.id">
                     <th scope="row">{{ index + 1 }}</th>
                     <td>{{ categoria.nome }}</td>
                     <td class="text-end">
@@ -157,10 +155,10 @@ const submitForm = async (id) => {
     <div v-else-if="!loading">
         <div class="card text-center mx-auto mt-5" style="max-width: 60%;">
             <div class="card-body">
-                <h5 class="card-title">Nenhum evento encontrado</h5>
+                <h5 class="card-title">Nenhuma categoria encontrada</h5>
             </div>
             <div class="card-footer">
-                <button class="btn btn-primary">Cadastrar evento</button>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCategoriaModal" @click="openCreateModal()">Cadastrar categoria</button>
             </div>
         </div>
     </div>
@@ -169,7 +167,7 @@ const submitForm = async (id) => {
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="createCategoriaModalLabel">Cadastrar categoria</h5>
+                    <h5 class="modal-title" id="createCategoriaModalLabel">{{ categoriaToEdit.id ? 'Editar categoria' : 'Cadastrar categoria' }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body
@@ -187,15 +185,15 @@ const submitForm = async (id) => {
                             :class="{ 'is-invalid': formSubmitted && !nomeCategoria }"
                             >
                             <div v-if="formSubmitted && !nomeCategoria" class="invalid-feedback">
-                                O nome de usuário é obrigatório.
+                                O nome da categoria é obrigatório.
                             </div>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                    <button v-if="!categoriaToEdit.nome" type="button" class="btn btn-primary" @click="submitForm()">Cadastrar</button>
-                    <button v-if="categoriaToEdit.nome" type="button" class="btn btn-primary" @click="submitForm(categoriaToEdit.documentId)">Salvar alterações</button>
+                    <button v-if="!categoriaToEdit.id" type="button" class="btn btn-primary" @click="submitForm()">Cadastrar</button>
+                    <button v-if="categoriaToEdit.id" type="button" class="btn btn-primary" @click="submitForm(categoriaToEdit.id)">Salvar alterações</button>
                 </div>
             </div>
         </div>
@@ -215,7 +213,7 @@ const submitForm = async (id) => {
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal" @click="deleteEvent(categoriaToDelete.documentId)">Excluir</button>
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal" @click="deleteEvent(categoriaToDelete.id)">Excluir</button>
                 </div>
             </div>
         </div>
