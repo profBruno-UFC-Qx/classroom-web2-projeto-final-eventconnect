@@ -39,12 +39,12 @@ function fecharConfirmDeleteModal() {
 
 async function confirmarDelecaoInscricao() {
     try {
-        await api.delete(`/inscricoes/${selectedInscricao.value.documentId}`, {
+        await api.delete(`/inscricoes/${selectedInscricao.value?.id}`, {
             headers: {
                 Authorization: `Bearer ${localStorage.getItem('jwt')}`
             }
         })
-        inscricoes.value = inscricoes.value.filter(inscricao => inscricao.documentId !== selectedInscricao.value.documentId)
+        inscricoes.value = inscricoes.value.filter(inscricao => inscricao?.id !== selectedInscricao.value?.id)
         toast.success('Inscrição cancelada com sucesso!')
     } catch (error) {
         toast.error('Erro ao cancelar a inscrição.')
@@ -54,17 +54,21 @@ async function confirmarDelecaoInscricao() {
 }
 
 const futureEvents = computed(() => {
-    return inscricoes.value.filter(inscricao => 
-        inscricao.evento && inscricao.evento.data && 
-        !isBefore(new Date(inscricao.evento.data), new Date())
-    )
+    return inscricoes.value.filter(inscricao =>
+            inscricao?.evento?.data &&
+            !isBefore(new Date(inscricao.evento.data), new Date())
+        )
+        .slice()
+        .sort((a, b) => new Date(a.evento.data) - new Date(b.evento.data))
 })
 
 const pastEvents = computed(() => {
     return inscricoes.value.filter(inscricao =>
-        inscricao.evento && inscricao.evento.data && 
-        isBefore(new Date(inscricao.evento.data), new Date()) 
-    )
+            inscricao?.evento?.data &&
+            isBefore(new Date(inscricao.evento.data), new Date())
+        )
+        .slice()
+        .sort((a, b) => new Date(b.evento.data) - new Date(a.evento.data))
 })
 </script>
 
@@ -90,7 +94,7 @@ const pastEvents = computed(() => {
             <section v-if="futureEvents.length > 0" class="mb-5">
                 <h5 class="section-title mb-4">Próximos Eventos</h5>
                 <div class="row g-4">
-                    <div v-for="inscricao in futureEvents" :key="inscricao.documentId" class="col-lg-4 col-md-6">
+                    <div v-for="inscricao in futureEvents" :key="inscricao?.id" class="col-lg-4 col-md-6">
                         <div class="card h-100 border-0 shadow-sm hover-card">
                             <div class="card-body p-4 d-flex flex-column">
                                 <div class="mb-3">
@@ -109,7 +113,11 @@ const pastEvents = computed(() => {
                                         <i class="bi bi-clock me-2 text-primary"></i>
                                         <span class="small fw-semibold">{{ format(new Date(inscricao.evento.data), 'HH:mm') }}</span>
                                     </div>
-                                    <button class="btn btn-light text-danger w-100 fw-bold border-0" @click="abrirConfirmDeleteModal(inscricao)">
+                                    <button
+                                        type="button"
+                                        class="btn btn-light text-danger w-100 fw-bold border-0"
+                                        @click.stop="abrirConfirmDeleteModal(inscricao)"
+                                    >
                                         Cancelar Inscrição
                                     </button>
                                 </div>
@@ -122,7 +130,7 @@ const pastEvents = computed(() => {
             <section v-if="pastEvents.length > 0">
                 <h5 class="section-title mb-4 text-muted">Histórico de Eventos</h5>
                 <div class="row g-4">
-                    <div v-for="inscricao in pastEvents" :key="inscricao.documentId" class="col-lg-4 col-md-6">
+                    <div v-for="inscricao in pastEvents" :key="inscricao?.id" class="col-lg-4 col-md-6">
                         <div class="card h-100 border-0 shadow-sm bg-light opacity-75">
                             <div class="card-body p-4 d-flex flex-column">
                                 <div class="mb-3">
@@ -156,7 +164,7 @@ const pastEvents = computed(() => {
 
     <div v-if="showConfirmDeleteModal" class="modal-overlay d-flex align-items-center justify-content-center" @click.self="fecharConfirmDeleteModal">
         <div class="modal-dialog w-100" style="max-width: 400px;">
-            <div class="modal-content border-0 shadow-lg animate__animated animate__zoomIn">
+            <div class="modal-content">
                 <div class="modal-body p-4 text-center">
                     <div class="icon-circle bg-danger-subtle text-danger mx-auto mb-4">
                         <i class="bi bi-x-circle fs-2"></i>
@@ -179,6 +187,12 @@ const pastEvents = computed(() => {
     position: relative;
     padding-left: 15px;
 }
+
+.modal-content {
+    background-color: #fff;
+    border-radius: 15px;
+}
+
 .section-title::before {
     content: '';
     position: absolute;

@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { api } from '@/api/'
-import * as bootstrap from 'bootstrap'
+import { Modal } from 'bootstrap'
 import ToastManager from '@/components/ToastManager.vue'
 import { toast } from 'vue-sonner'
 import { format } from "date-fns"
@@ -129,7 +129,9 @@ const submitForm = async (id) => {
         return;
     }
 
-    const modal = bootstrap.Modal.getInstance(document.getElementById('createEventoModal'))
+    const modalEl = document.getElementById('createEventoModal')
+    const modal = Modal.getOrCreateInstance(modalEl) // <-- (não use getInstance)
+   
     const payload = {
         nome: nome.value,
         descricao: descricao.value,

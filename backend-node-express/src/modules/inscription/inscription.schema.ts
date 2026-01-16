@@ -2,7 +2,6 @@ import { z } from "zod";
 
 export const createInscriptionSchema = z.object({
   eventId: z
-    .string()
     .uuid("ID do evento deve ser um UUID válido"),
 });
 

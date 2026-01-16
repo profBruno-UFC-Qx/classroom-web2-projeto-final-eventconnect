@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { api } from '@/api/'
-import * as bootstrap from 'bootstrap'
+import { Modal } from 'bootstrap'
 
 const loading = ref(true)
 const categorias = ref([])
@@ -90,7 +90,8 @@ const submitForm = async (id) => {
     formSubmitted.value = true
     if (!nomeCategoria.value) return
 
-    const modal = bootstrap.Modal.getInstance(document.getElementById('createCategoriaModal'))
+    const modalEl = document.getElementById('createCategoriaModal')
+    const modal = Modal.getOrCreateInstance(modalEl)
 
     try {
         if (id) {
