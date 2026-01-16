@@ -2,15 +2,21 @@
 import { ref, onMounted } from 'vue'
 import { api } from '@/api/'
 import * as bootstrap from 'bootstrap'
-import { useUpload } from '@/composables/useUpload'
 import ToastManager from '@/components/ToastManager.vue'
 import { toast } from 'vue-sonner'
 import { format } from "date-fns"
 
-const uploadHelper = useUpload()
+const defaultImage = 'https://placehold.co/600x400?text=Sem+Imagem'
+
+function handleImageError(event) {
+  event.target.src = defaultImage
+}
 
 const loading = ref(true)
 const eventos = ref([])
+const page = ref(1)
+const limit = ref(10)
+const totalPages = ref(1)
 const eventoToDelete = ref({})
 const eventoToEdit = ref({})
 
@@ -24,43 +30,64 @@ const categorias = ref([])
 const categoriaSelecionada = ref('')
 const previewImageUrl = ref(null);
 
-
-onMounted(async () => {
+const fetchEventos = async () => {
+    loading.value = true
     try {
         const { data } = await api.get('/eventos', {
-            headers: {
-                Authorization: `Bearer ${localStorage.getItem('jwt')}`
-            }
+            params: {
+                page: page.value,
+                limit: limit.value
+            },
+            headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
         })
         eventos.value = data.data
-        console.log(data.data)
-
-        const { data: categoriasData } = await api.get('/categorias', {
-            headers: {
-                Authorization: `Bearer ${localStorage.getItem('jwt')}`
-            }
-        })
-        categorias.value = categoriasData.data
-        console.log(categorias.value)
+        if (data.meta) {
+            totalPages.value = data.meta.totalPages
+        }
     } catch (error) {
         console.error(error)
+        toast.error('Erro ao carregar eventos.')
     } finally {
         loading.value = false
     }
+}
+
+onMounted(async () => {
+    await fetchEventos()
+    try {
+        const { data: categoriasData } = await api.get('/categorias', {
+            headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
+        })
+        categorias.value = categoriasData.data
+    } catch (error) {
+        console.error(error)
+    }
 
     const createModalEl = document.getElementById('createEventoModal')
-
     createModalEl.addEventListener('hidden.bs.modal', () => {
-        console.log('Modal foi fechada!')
         if (!eventoToEdit.value || !eventoToEdit.value.id) {
-            nome.value = ''
-            descricao.value = ''
-            endereco.value = ''
-            dataEvento.value = ''
-            formSubmitted.value = false
+            resetForm()
         }
     })
 })
+
+const resetForm = () => {
+    nome.value = ''
+    descricao.value = ''
+    endereco.value = ''
+    dataEvento.value = ''
+    imagem.value = ''
+    previewImageUrl.value = null
+    categoriaSelecionada.value = ''
+    formSubmitted.value = false
+}
+
+const changePage = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages.value) {
+        page.value = newPage
+        fetchEventos()
+    }
+}
 
 const openDeleteModal = (evento) => {
     eventoToDelete.value = evento
@@ -69,43 +96,32 @@ const openDeleteModal = (evento) => {
 const deleteEvent = async (id) => {
     try {
         await api.delete(`/eventos/${id}`, {
-            headers: {
-                Authorization: `Bearer ${localStorage.getItem('jwt')}`
-            }
+            headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
         });
-        eventos.value = eventos.value.filter(evento => evento.id !== id);
         toast.success('Evento excluído com sucesso!')
+        if (eventos.value.length === 1 && page.value > 1) {
+            page.value--
+        }
+        await fetchEventos()
     } catch (error) {
-        console.error('Erro ao deletar o evento:', error);
         toast.error('Erro ao excluir o evento.')
     }
 };
 
-
 const openCreateModal = () => {
-    nome.value = ''
-    descricao.value = ''
-    endereco.value = ''
-    dataEvento.value = ''
-    imagem.value = '';
-    previewImageUrl.value = null;
-    formSubmitted.value = false
+    resetForm()
     eventoToEdit.value = {}
 }
 
 const openEditModal = (evento) => {
-    console.log('Editar evento:', evento)
     eventoToEdit.value = evento
     nome.value = evento.nome
     descricao.value = evento.descricao
     endereco.value = evento.endereco
     dataEvento.value = format(new Date(evento.data), "yyyy-MM-dd'T'HH:mm")
     categoriaSelecionada.value = evento.categoria.id
-
     imagem.value = evento.imagem || '';
-    previewImageUrl.value = evento.imagem || null;
 }
-
 
 const submitForm = async (id) => {
     formSubmitted.value = true;
@@ -114,7 +130,6 @@ const submitForm = async (id) => {
     }
 
     const modal = bootstrap.Modal.getInstance(document.getElementById('createEventoModal'))
-
     const payload = {
         nome: nome.value,
         descricao: descricao.value,
@@ -124,198 +139,217 @@ const submitForm = async (id) => {
         imagem: imagem.value
     }
 
-    if (id) {
-        console.log('Editar evento', eventoToEdit.value)
-
-        try {
-            const evento = await api.put(`/eventos/${id}`, payload, {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem('jwt')}`,
-                },
+    try {
+        if (id) {
+            await api.put(`/eventos/${id}`, payload, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` },
             })
-
-            const { data } = await api.get('/eventos', {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem('jwt')}`
-                }
+            toast.success('Evento atualizado!')
+        } else {
+            await api.post('/eventos', payload, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` },
             })
-            
-            eventos.value = data.data
-            modal.hide()
-            toast.success('Evento editado com sucesso!')
-        } catch (error) {
-            console.error('Erro ao criar o evento:', error)
-            toast.error('Erro ao excluir evento!')   
+            toast.success('Evento criado!')
         }
-    }else{
-        console.log('Criar evento', nome.value)
 
-        try {
-            const evento = await api.post('/eventos', payload, {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem('jwt')}`,
-                },
-            })
-
-            const { data } = await api.get('/eventos', {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem('jwt')}`
-                }
-            })
-            
-            eventos.value = data.data
-            modal.hide()
-            toast.success('Evento criado com sucesso!')
-        } catch (error) {
-            console.error('Erro ao criar o evento:', error)
-            toast.error('Erro ao criar evento!')   
-        }
+        await fetchEventos()
+        modal.hide()
+    } catch (error) {
+        toast.error('Ocorreu um erro na operação.')
     }
-    
 }
-
 </script>
 
 <template>
     <ToastManager />
-    <div v-if="loading" class="d-flex align-items-center justify-content-center mt-5">
-      <div class="spinner-grow" role="status">
-        <span class="visually-hidden">Loading...</span>
-      </div>
-    </div>
 
-    <div v-if="eventos.length > 0 && !loading" class="mt-5">
-        <div class="d-flex align-items-center justify-content-end">
-            <button class="btn btn-primary me-4" data-bs-toggle="modal" data-bs-target="#createEventoModal" @click="openCreateModal()">Cadastrar evento</button>
+    <div class="container py-5">
+        <div v-if="loading" class="d-flex flex-column align-items-center justify-content-center mt-5">
+            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
+            <p class="mt-3 text-muted">Carregando eventos...</p>
         </div>
-        <div class="table-responsive">
-            <table class="table table-hover table-sm mx-auto">
-                <thead>
-                <tr>
-                    <th scope="col">#</th>
-                    <th scope="col" class="d-none d-md-table-cell">Imagem</th>
-                    <th scope="col">Categoria</th>
-                    <th scope="col">Nome</th>
-                    <th scope="col" class="d-none d-md-table-cell">Descrição</th>
-                    <th scope="col" class="d-none d-md-table-cell">Endereço</th>
-                    <th scope="col">Data</th>
-                    <th scope="col" style="width: 150px;"> </th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr v-for="(evento, index) in eventos" :key="evento.id">
-                    <th scope="row">{{ index + 1 }}</th>
-                    <td class="d-none d-md-table-cell">
-                    <img v-if="evento.imagem" 
-                        :src="evento.imagem" 
-                        alt="Imagem do evento" 
-                        style="width: 100px; height: auto;" />
-                    </td>
-                    <td>{{ evento.categoria.nome }}</td>
-                    <td>{{ evento.nome }}</td>
-                    <td class="d-none d-md-table-cell">{{ evento.descricao }}</td>
-                    <td class="d-none d-md-table-cell">{{ evento.endereco }}</td>
-                    <td>{{ new Date(evento.data).toLocaleDateString() }}</td>
-                    <td class="text-end" style="width: 150px;">
-                    <button class="btn btn-warning btn-sm me-2" @click="openEditModal(evento)" data-bs-toggle="modal" data-bs-target="#createEventoModal">Editar</button>
-                    <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteEventoModal" @click="openDeleteModal(evento)">Excluir</button>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
 
-    <div v-else-if="!loading">
-        <div class="card text-center mx-auto mt-5" style="max-width: 60%;">
-            <div class="card-body">
-                <h5 class="card-title">Nenhum evento encontrado</h5>
+        <div v-if="eventos.length > 0 && !loading" class="animate__animated animate__fadeIn">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <h2 class="fw-bold m-0">Gerenciar Eventos</h2>
+                <button class="btn btn-primary shadow-sm d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#createEventoModal" @click="openCreateModal()">
+                    <i class="bi bi-plus-lg"></i> Novo Evento
+                </button>
             </div>
-            <div class="card-footer">   
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createEventoModal" @click="openCreateModal()">Cadastrar evento</button>
-            </div>
-        </div>
-    </div>
 
-    <div class="modal fade" id="createEventoModal" tabindex="-1" aria-labelledby="createEventoModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="createEventoModalLabel">Cadastrar evento</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="card shadow-sm border-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">#</th>
+                                <th class="d-none d-md-table-cell">Imagem</th>
+                                <th>Evento</th>
+                                <th class="d-none d-md-table-cell">Endereço</th>
+                                <th>Data</th>
+                                <th class="text-end pe-4">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(evento, index) in eventos" :key="evento.id">
+                                <td class="ps-4 text-muted">{{ index + 1 }}</td>
+                                <td class="d-none d-md-table-cell">
+                                    <img :src="evento.imagem || defaultImage" @error="handleImageError" alt="Imagem do Evento" class="rounded object-fit-cover shadow-sm" style="width: 80px; height: 60px;">
+                                </td>
+                                <td>
+                                    <div class="fw-bold text-dark">{{ evento.nome }}</div>
+                                    <small class="badge bg-light text-primary border">{{ evento.categoria.nome }}</small>
+                                </td>
+                                <td class="d-none d-md-table-cell text-muted small">{{ evento.endereco }}</td>
+                                <td>
+                                    <div class="small fw-semibold">{{ new Date(evento.data).toLocaleDateString() }}</div>
+                                    <div class="text-muted" style="font-size: 0.75rem;">{{ new Date(evento.data).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }}</div>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-warning" @click="openEditModal(evento)" data-bs-toggle="modal" data-bs-target="#createEventoModal">
+                                            Editar
+                                        </button>
+                                        <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteEventoModal" @click="openDeleteModal(evento)">
+                                            Excluir
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
-                <div class="modal-body">
-                    <form>
-                        <div class="mb-3">
-                            <img v-if="imagem" :src="imagem" alt="Imagem do evento" class="img-fluid mb-3" />
-                            <label for="coverInput" class="form-label">URL da Imagem</label>
-                            <input
-                                type="text"
-                                v-model="imagem"
-                                id="coverInput"
-                                placeholder="https://exemplo.com/imagem.png"
-                                class="form-control"
-                                :class="{ 'is-invalid': formSubmitted && !imagem }"
-                            />
-                            <div v-if="formSubmitted && !imagem" class="invalid-feedback">A URL da imagem do evento é obrigatória.</div>
-                            
+            </div>
+
+            <div v-if="totalPages > 1" class="d-flex justify-content-center mt-4">
+                <nav aria-label="Navegação de página">
+                    <ul class="pagination">
+                        <li class="page-item" :class="{ disabled: page === 1 }">
+                            <button class="page-link" @click="changePage(page - 1)" aria-label="Anterior">
+                                <span aria-hidden="true">&laquo;</span>
+                            </button>
+                        </li>
+                        <li class="page-item disabled">
+                            <span class="page-link text-dark">Página {{ page }} de {{ totalPages }}</span>
+                        </li>
+                        <li class="page-item" :class="{ disabled: page === totalPages }">
+                            <button class="page-link" @click="changePage(page + 1)" aria-label="Próximo">
+                                <span aria-hidden="true">&raquo;</span>
+                            </button>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+
+        <div v-else-if="!loading" class="text-center py-5">
+            <div class="card border-0 shadow-sm mx-auto p-5" style="max-width: 500px;">
+                <div class="mb-4">
+                    <i class="bi bi-calendar-x text-muted" style="font-size: 4rem;"></i>
+                </div>
+                <h4 class="fw-bold">Nenhum evento encontrado</h4>
+                <p class="text-muted">Comece criando o seu primeiro evento agora mesmo.</p>
+                <button class="btn btn-primary px-4 mt-3" data-bs-toggle="modal" data-bs-target="#createEventoModal" @click="openCreateModal()">
+                    Cadastrar evento
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="createEventoModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-bottom-0 pt-4 px-4">
+                    <h5 class="modal-title fw-bold">{{ eventoToEdit.id ? 'Editar Evento' : 'Novo Evento' }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body px-4">
+                    <form @submit.prevent>
+                        <div class="mb-4 text-center">
+                            <img :src="imagem || defaultImage" @error="handleImageError" class="card-img-top custom-card-img" alt="Imagem do Evento">
                         </div>
+
                         <div class="mb-3">
-                            <label for="eventoNome" class="form-label">Nome</label>
-                            <input type="text" class="form-control" id="eventoNome" placeholder="Digite o nome do evento..." v-model="nome" :class="{ 'is-invalid': formSubmitted && !nome }">
-                            <div v-if="formSubmitted && !nome" class="invalid-feedback">O nome do evento é obrigatório.</div>
+                            <label class="form-label small fw-bold">URL da Imagem</label>
+                            <input type="text" v-model="imagem" class="form-control form-control-sm" :class="{ 'is-invalid': formSubmitted && !imagem }" placeholder="https://...">
+                            <div class="invalid-feedback">A imagem é obrigatória.</div>
                         </div>
-                        <div class="mb-3">
-                            <label for="eventoDescricao" class="form-label">Descrição</label>
-                            <input type="text" class="form-control" id="eventoDescricao" placeholder="Digite a descrição do evento..." v-model="descricao" :class="{ 'is-invalid': formSubmitted && !descricao }">
-                            <div v-if="formSubmitted && !descricao" class="invalid-feedback">A descrição do evento é obrigatória.</div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-12">
+                                <label class="form-label small fw-bold">Nome do Evento</label>
+                                <input type="text" v-model="nome" class="form-control" :class="{ 'is-invalid': formSubmitted && !nome }">
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label small fw-bold">Descrição</label>
+                                <textarea v-model="descricao" class="form-control" rows="2" :class="{ 'is-invalid': formSubmitted && !descricao }"></textarea>
+                            </div>
                         </div>
+
                         <div class="mb-3">
-                            <label for="eventoEndereco" class="form-label">Endereço</label>
-                            <input type="text" class="form-control" id="eventoEndereco" placeholder="Digite o endereço do evento..." v-model="endereco" :class="{ 'is-invalid': formSubmitted && !endereco }">
-                            <div v-if="formSubmitted && !endereco" class="invalid-feedback">O endereço do evento é obrigatório.</div>
+                            <label class="form-label small fw-bold">Endereço</label>
+                            <input type="text" v-model="endereco" class="form-control" :class="{ 'is-invalid': formSubmitted && !endereco }">
                         </div>
-                        <div class="mb-3">
-                            <label for="eventoData" class="form-label">Data</label>
-                            <input type="datetime-local" class="form-control" id="eventoData" v-model="dataEvento" :class="{ 'is-invalid': formSubmitted && !dataEvento }">
-                            <div v-if="formSubmitted && !dataEvento" class="invalid-feedback">A data do evento é obrigatória.</div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="eventoCategoria" class="form-label">Categoria</label>
-                            <select v-model="categoriaSelecionada" id="eventoCategoria" class="form-select" :class="{ 'is-invalid': formSubmitted && !categoriaSelecionada }">
-                                <option value="" disabled>Selecione uma categoria...</option>
-                                <option v-for="categoria in categorias" :key="categoria.id" :value="categoria.id">
-                                    {{ categoria.nome }}
-                                </option>
-                            </select>
-                            <div v-if="formSubmitted && !categoriaSelecionada" class="invalid-feedback">A categoria do evento é obrigatória.</div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Data e Hora</label>
+                                <input type="datetime-local" v-model="dataEvento" class="form-control" :class="{ 'is-invalid': formSubmitted && !dataEvento }">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Categoria</label>
+                                <select v-model="categoriaSelecionada" class="form-select" :class="{ 'is-invalid': formSubmitted && !categoriaSelecionada }">
+                                    <option value="" disabled>Escolha...</option>
+                                    <option v-for="cat in categorias" :key="cat.id" :value="cat.id">{{ cat.nome }}</option>
+                                </select>
+                            </div>
                         </div>
                     </form>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button v-if="!eventoToEdit.id" type="button" class="btn btn-primary" @click="submitForm()">Cadastrar</button>
-                    <button v-if="eventoToEdit.id" type="button" class="btn btn-primary" @click="submitForm(eventoToEdit.id)">Salvar alterações</button>
+                <div class="modal-footer border-top-0 pb-4 px-4">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary px-4" @click="submitForm(eventoToEdit.id)">
+                        {{ eventoToEdit.id ? 'Salvar Alterações' : 'Criar Evento' }}
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="modal fade" id="deleteEventoModal" tabindex="-1" aria-labelledby="deleteEventoModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="deleteEventoModalLabel">Confirmar exclusão</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    Tem certeza que deseja excluir o evento "{{ eventoToDelete.nome }}"?
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal" @click="deleteEvent(eventoToDelete.id)">Excluir</button>
+    <div class="modal fade" id="deleteEventoModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-body text-center p-4">
+                    <i class="bi bi-exclamation-triangle text-danger mb-3" style="font-size: 2.5rem;"></i>
+                    <h5 class="fw-bold">Excluir Evento?</h5>
+                    <p class="text-muted small">Tem certeza que deseja excluir <strong>{{ eventoToDelete.nome }}</strong>? Esta ação não pode ser desfeita.</p>
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Não</button>
+                        <button type="button" class="btn btn-danger w-100" data-bs-dismiss="modal" @click="deleteEvent(eventoToDelete.id)">Sim, excluir</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </template>
+
+<style scoped>
+.table hover tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.object-fit-cover {
+    object-fit: cover;
+}
+
+.form-control:focus, .form-select:focus {
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.1);
+    border-color: #86b7fe;
+}
+
+.custom-card-img {
+    height: 200px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+</style>

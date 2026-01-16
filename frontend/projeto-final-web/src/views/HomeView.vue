@@ -18,6 +18,7 @@ const defaultImage = 'https://placehold.co/600x400?text=Sem+Imagem'
 const page = ref(1)
 const limit = ref(6)
 const totalPages = ref(1)
+const userSubscriptions = ref(new Set())
 
 function handleImageError(event) {
   event.target.src = defaultImage
@@ -56,11 +57,26 @@ function changePage(newPage) {
   }
 }
 
+async function fetchUserSubscriptions() {
+  if (userStore.isAuthenticated) {
+    try {
+      const { data } = await api.get('/users/me', {
+        headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
+      })
+      const inscricoes = data.data?.inscricoes || []
+      userSubscriptions.value = new Set(inscricoes.map(i => i.evento?.id))
+    } catch (error) {
+      console.error('Erro ao carregar inscrições:', error)
+    }
+  }
+}
+
 onMounted(async () => {
   try {
     const { data: cats } = await api.get('/categorias')
     categorias.value = cats.data
     await fetchEventos()
+    await fetchUserSubscriptions()
   } catch (error) {
     console.error(error)
   }
@@ -95,24 +111,7 @@ function fecharConfirmModal() {
 
 async function inscreverSe(evento) {
   if (userStore.isAuthenticated) {
-    try {
-      const { data } = await api.get(`/inscricoes`, {
-        params: {
-          filters: {
-            evento: { id: evento.id },
-            user: { id: userStore.user.id }
-          }
-        },
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('jwt')}`
-        }
-      });
-      abrirConfirmModal(evento)
-
-    } catch (error) {
-      console.error('Erro ao verificar a inscrição:', error.response?.data || error)
-      toast.error('Erro ao verificar a inscrição.')
-    }
+    abrirConfirmModal(evento)
   } else {
     abrirLoginModal()
   }
@@ -128,6 +127,7 @@ async function confirmarInscricao() {
       }
     })
     toast.success('Inscrição realizada com sucesso!')
+    userSubscriptions.value.add(selectedEvento.value.id)
   } catch (error) {
     console.error('Erro ao se inscrever no evento:', error.response?.data || error)
     toast.error('Erro ao se inscrever no evento.')
@@ -159,18 +159,18 @@ async function confirmarInscricao() {
             </div>
             <div class="col-md-2">
               <label class="form-label small fw-bold">Categoria</label>
-              <select v-model="categoryId" class="form-select" @change="applyFilters">
+              <select v-model="categoryId" class="form-select">
                 <option value="">Todas</option>
                 <option v-for="cat in categorias" :key="cat.id" :value="cat.id">{{ cat.nome }}</option>
               </select>
             </div>
             <div class="col-md-2">
               <label class="form-label small fw-bold">Início</label>
-              <input v-model="startDate" type="date" class="form-control" @change="applyFilters">
+              <input v-model="startDate" type="date" class="form-control">
             </div>
             <div class="col-md-2">
               <label class="form-label small fw-bold">Fim</label>
-              <input v-model="endDate" type="date" class="form-control" @change="applyFilters">
+              <input v-model="endDate" type="date" class="form-control">
             </div>
             <div class="col-md-2">
               <button class="btn btn-primary w-100 fw-bold py-2" @click="applyFilters">
@@ -181,7 +181,15 @@ async function confirmarInscricao() {
         </div>
       </div>
 
-      <div class="row">
+      <div v-if="eventos.length === 0" class="text-center py-5">
+        <div class="mb-3">
+          <i class="bi bi-calendar-x text-muted" style="font-size: 4rem;"></i>
+        </div>
+        <h4 class="fw-bold text-muted">Nenhum evento encontrado</h4>
+        <p class="text-muted">Tente ajustar os filtros para encontrar o que procura.</p>
+      </div>
+
+      <div v-else class="row">
         <div class="col-lg-4 col-md-6 mb-4" v-for="evento in eventos" :key="evento.id">
           <div class="card h-100 border-0 shadow-sm hover-card">
             <div class="position-relative">
@@ -211,7 +219,10 @@ async function confirmarInscricao() {
 
             <div class="card-footer bg-transparent border-0 pb-3 d-flex gap-2">
               <button class="btn btn-outline-primary flex-grow-1" @click="abrirModal(evento)">Ver Detalhes</button>
-              <button v-if="userStore.isAuthenticated && userStore.role !== 'Admin' && !isBefore(new Date(evento.data), new Date())" 
+              <div v-if="userSubscriptions.has(evento.id)" class="d-flex align-items-center justify-content-center flex-grow-1 text-success fw-bold border border-success rounded bg-success-subtle">
+                <i class="bi bi-check-circle-fill me-2"></i> Inscrito
+              </div>
+              <button v-else-if="userStore.isAuthenticated && userStore.role !== 'Admin' && !isBefore(new Date(evento.data), new Date())" 
                       class="btn btn-primary flex-grow-1" 
                       @click="inscreverSe(evento)">
                 Inscrever-se

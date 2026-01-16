@@ -6,8 +6,10 @@ export class CategoryController {
     constructor(protected categoryService: CategoryService = new CategoryService()) { }
 
     index = async (req: Request, res: Response) => {
-        const categorias = await this.categoryService.findAll();
-        res.json({ data: categorias });
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 10;
+        const result = await this.categoryService.findAll(page, limit);
+        res.json(result);
     };
 
     show = async (req: Request, res: Response) => {
