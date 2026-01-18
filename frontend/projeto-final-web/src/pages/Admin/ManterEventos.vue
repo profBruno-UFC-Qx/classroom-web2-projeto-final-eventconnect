@@ -1,10 +1,11 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { api } from '@/api/'
 import { Modal } from 'bootstrap'
 import ToastManager from '@/components/ToastManager.vue'
 import { toast } from 'vue-sonner'
 import { format } from "date-fns"
+import EventService from '@/services/Event/EventService'
+import CategoryService from '@/services/Category/CategoryService'
 
 const defaultImage = 'https://placehold.co/600x400?text=Sem+Imagem'
 
@@ -30,34 +31,27 @@ const categorias = ref([])
 const categoriaSelecionada = ref('')
 const previewImageUrl = ref(null);
 
-const fetchEventos = async () => {
-    loading.value = true
-    try {
-        const { data } = await api.get('/eventos', {
-            params: {
-                page: page.value,
-                limit: limit.value
-            },
-            headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
-        })
-        eventos.value = data.data
-        if (data.meta) {
-            totalPages.value = data.meta.totalPages
-        }
-    } catch (error) {
-        console.error(error)
-        toast.error('Erro ao carregar eventos.')
-    } finally {
-        loading.value = false
+async function fetchEventos() {
+  loading.value = true
+  try {
+    const params = {
+      page: page.value,
+      limit: limit.value,
     }
+    const response = await EventService.getAllEvents(params)
+    eventos.value = response.data
+    totalPages.value = response.meta.totalPages
+  } catch (error) {
+    console.error(error)
+  } finally {
+    loading.value = false
+  }
 }
 
 onMounted(async () => {
     await fetchEventos()
     try {
-        const { data: categoriasData } = await api.get('/categorias', {
-            headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
-        })
+        const categoriasData = await CategoryService.getAllCategories()
         categorias.value = categoriasData.data
     } catch (error) {
         console.error(error)
@@ -95,9 +89,7 @@ const openDeleteModal = (evento) => {
 
 const deleteEvent = async (id) => {
     try {
-        await api.delete(`/eventos/${id}`, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
-        });
+        await EventService.deleteEvent(id)
         toast.success('Evento excluído com sucesso!')
         if (eventos.value.length === 1 && page.value > 1) {
             page.value--
@@ -130,7 +122,7 @@ const submitForm = async (id) => {
     }
 
     const modalEl = document.getElementById('createEventoModal')
-    const modal = Modal.getOrCreateInstance(modalEl) // <-- (não use getInstance)
+    const modal = Modal.getOrCreateInstance(modalEl)
    
     const payload = {
         nome: nome.value,
@@ -143,14 +135,10 @@ const submitForm = async (id) => {
 
     try {
         if (id) {
-            await api.put(`/eventos/${id}`, payload, {
-                headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` },
-            })
+            await EventService.updateEvent(id, payload)
             toast.success('Evento atualizado!')
         } else {
-            await api.post('/eventos', payload, {
-                headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` },
-            })
+            await EventService.createEvent(payload)
             toast.success('Evento criado!')
         }
 

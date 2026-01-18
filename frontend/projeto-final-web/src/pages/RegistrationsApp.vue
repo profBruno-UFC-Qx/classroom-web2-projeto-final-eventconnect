@@ -2,12 +2,10 @@
 import ToastManager from '@/components/ToastManager.vue'
 import { onMounted, ref, computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import { api } from '@/api'
-import { useUserStore } from '@/stores/userStore'
 import { toast } from 'vue-sonner'
 import { format, isBefore } from "date-fns"
+import InscriptionService from '@/services/Inscription/InscriptionService'
 
-const userStore = useUserStore()
 const inscricoes = ref([])
 const loading = ref(true)
 const selectedInscricao = ref(null)
@@ -15,12 +13,8 @@ const showConfirmDeleteModal = ref(false)
 
 onMounted(async () => {
     try {
-        const { data } = await api.get(`/inscricoes?filters[user][id][$eq]=${userStore.id}&populate[evento]=*&populate[user]=*`, {
-            headers: {
-                Authorization: `Bearer ${localStorage.getItem('jwt')}`
-            }
-        })
-        inscricoes.value = data.data
+        const response = await InscriptionService.getAllInscriptions()
+        inscricoes.value = response.data
     } catch (error) {
         console.error(error)
     } finally {
@@ -39,11 +33,7 @@ function fecharConfirmDeleteModal() {
 
 async function confirmarDelecaoInscricao() {
     try {
-        await api.delete(`/inscricoes/${selectedInscricao.value?.id}`, {
-            headers: {
-                Authorization: `Bearer ${localStorage.getItem('jwt')}`
-            }
-        })
+        await InscriptionService.deleteInscription(selectedInscricao.value.id)
         inscricoes.value = inscricoes.value.filter(inscricao => inscricao?.id !== selectedInscricao.value?.id)
         toast.success('Inscrição cancelada com sucesso!')
     } catch (error) {

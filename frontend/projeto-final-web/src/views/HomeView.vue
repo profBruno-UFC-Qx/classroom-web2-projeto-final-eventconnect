@@ -1,10 +1,13 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { api } from '@/api'
 import { useUserStore } from '@/stores/userStore'
 import { format, isBefore } from "date-fns"
 import ToastManager from '@/components/ToastManager.vue'
 import { toast } from 'vue-sonner'
+import EventService from '@/services/Event/EventService'
+import UserService from '@/services/User/UserService'
+import CategoryService from '@/services/Category/CategoryService'
+import InscriptionService from '@/services/Inscription/InscriptionService'
 
 const eventos = ref([])
 const loading = ref(true)
@@ -35,9 +38,9 @@ async function fetchEventos() {
       startDate: startDate.value,
       endDate: endDate.value
     }
-    const { data } = await api.get('/eventos', { params })
-    eventos.value = data.data
-    totalPages.value = data.meta.totalPages
+    const response = await EventService.getAllEvents(params)
+    eventos.value = response.data
+    totalPages.value = response.meta.totalPages
   } catch (error) {
     console.error(error)
   } finally {
@@ -60,10 +63,8 @@ function changePage(newPage) {
 async function fetchUserSubscriptions() {
   if (userStore.isAuthenticated) {
     try {
-      const { data } = await api.get('/users/me', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
-      })
-      const inscricoes = data.data?.inscricoes || []
+      const response = await UserService.getUserProfile()
+      const inscricoes = response.data?.inscricoes || []
       userSubscriptions.value = new Set(inscricoes.map(i => i.evento?.id))
     } catch (error) {
       console.error('Erro ao carregar inscrições:', error)
@@ -73,8 +74,8 @@ async function fetchUserSubscriptions() {
 
 onMounted(async () => {
   try {
-    const { data: cats } = await api.get('/categorias')
-    categorias.value = cats.data
+    const catsResponse = await CategoryService.getAllCategories()
+    categorias.value = catsResponse.data
     await fetchEventos()
     await fetchUserSubscriptions()
   } catch (error) {
@@ -119,13 +120,7 @@ async function inscreverSe(evento) {
 
 async function confirmarInscricao() {
   try {
-    await api.post('/inscricoes', {
-        eventId: selectedEvento.value.id
-    }, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('jwt')}`
-      }
-    })
+    await InscriptionService.createInscription(selectedEvento.value.id)
     toast.success('Inscrição realizada com sucesso!')
     userSubscriptions.value.add(selectedEvento.value.id)
   } catch (error) {

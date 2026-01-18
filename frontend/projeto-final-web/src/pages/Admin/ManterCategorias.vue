@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { api } from '@/api/'
 import { Modal } from 'bootstrap'
+import CategoryService from '@/services/Category/CategoryService'
 
 const loading = ref(true)
 const categorias = ref([])
@@ -16,19 +16,9 @@ const formSubmitted = ref(false)
 const fetchCategorias = async () => {
     loading.value = true
     try {
-        const { data } = await api.get('/categorias', {
-            params: {
-                page: page.value,
-                limit: limit.value
-            },
-            headers: {
-                Authorization: `Bearer ${localStorage.getItem('jwt')}`
-            }
-        })
-        categorias.value = data.data
-        if (data.meta) {
-            totalPages.value = data.meta.totalPages
-        }
+        const response = await CategoryService.getAllCategories({ page: page.value, limit: limit.value })
+        categorias.value = response.data
+        totalPages.value = response.meta.totalPages
     } catch (error) {
         console.error(error)
     } finally {
@@ -61,14 +51,7 @@ const openDeleteModal = (categoria) => {
 
 const deleteEvent = async (id) => {
     try {
-        await api.delete(`/categorias/${id}`, {
-            headers: {
-                Authorization: `Bearer ${localStorage.getItem('jwt')}`
-            }
-        })
-        if (categorias.value.length === 1 && page.value > 1) {
-            page.value--
-        }
+        await CategoryService.deleteCategory(id)
         await fetchCategorias()
     } catch (error) {
         console.error('Erro ao deletar categoria:', error)
@@ -95,17 +78,9 @@ const submitForm = async (id) => {
 
     try {
         if (id) {
-            await api.put(`/categorias/${id}`, {
-                data: { nome: nomeCategoria.value }
-            }, {
-                headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
-            })
+            await CategoryService.updateCategory(id, nomeCategoria.value)
         } else {
-            await api.post('/categorias', {
-                nome: nomeCategoria.value
-            }, {
-                headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
-            })
+            await CategoryService.createCategory(nomeCategoria.value)
         }
         await fetchCategorias()
         modal.hide()

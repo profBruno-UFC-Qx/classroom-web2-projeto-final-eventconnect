@@ -1,12 +1,12 @@
 <script setup lang="js">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { api } from '@/api/'
 import { useUserStore } from '@/stores/userStore'
 import { isAxiosError } from 'axios'
 import { isApplicationError } from '@/composables/useApplicationError.js'
 import ToastManager from '@/components/ToastManager.vue'
 import { toast } from 'vue-sonner'
+import AuthService from '@/services/Auth/AuthService'
 
 const identifier = ref('')
 const password = ref('')
@@ -31,22 +31,8 @@ async function authenticate() {
   try {
     loading.value = true
     exception.value = undefined
-    const { data } = await api.post('/auth/login', {
-      email: identifier.value,
-      password: password.value
-    })
-    const { jwt, user } = data.data
-
-    // const res = await api.get('/users/me', {
-    //   headers: {
-    //     Authorization: `Bearer ${jwt}`
-    //   },
-    //   params: {
-    //     populate: 'role'
-    //   }
-    // })
-
-    // userStore.authenticaded(res.data, jwt)
+    const response = await AuthService.login(identifier.value, password.value)
+    const { jwt, user } = response.data
 
     userStore.authenticaded(user, jwt)
 

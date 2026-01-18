@@ -1,11 +1,11 @@
 <script setup lang="js">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { api } from '@/api/'
 import { isAxiosError } from 'axios'
 import { isApplicationError } from '@/composables/useApplicationError.js'
 import { useUserStore } from '@/stores/userStore'
 const userStore = useUserStore()
+import AuthService from '@/services/Auth/AuthService'
 
 const username = ref('')
 const email = ref('')
@@ -30,14 +30,9 @@ async function register() {
     loading.value = true
     exception.value = undefined
 
-    const { data } = await api.post('/auth/register', {
-      username: username.value,
-      email: email.value,
-      password: password.value,
-    })
-
-    console.log(data)
+    const data = await AuthService.register(username.value, email.value, password.value)
     const { jwt, user } = data.data
+    
     userStore.authenticaded(user, jwt)
     router.push('/')
   } catch (e) {
