@@ -43,6 +43,7 @@ export class CategoryController {
             const categoria = await this.categoryService.update(id, validated);
             res.json({ data: categoria });
         } catch (error) {
+            console.log(error);
             res.status(404).json({ message: 'Categoria não encontrada' });
         }
     };
@@ -57,6 +58,7 @@ export class CategoryController {
             await this.categoryService.delete(id);
             res.status(204).json();
         } catch (error) {
+            console.log(error);
             res.status(404).json({ message: 'Categoria não encontrada' });
         }
     };

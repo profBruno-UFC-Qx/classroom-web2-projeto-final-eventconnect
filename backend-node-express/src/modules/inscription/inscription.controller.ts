@@ -5,7 +5,7 @@ import { AuthRequest } from "../../shared/schemas";
 
 export class InscriptionController {
     constructor(
-        private inscriptionService: InscriptionService = new InscriptionService()
+        private readonly inscriptionService: InscriptionService = new InscriptionService()
     ) { }
 
     store = async (req: Request, res: Response) => {
@@ -25,10 +25,8 @@ export class InscriptionController {
 
     index = async (req: Request, res: Response) => {
         try {
-            const eventId = req.query.eventId
-                ? String(req.query.eventId)
-                : undefined;
-
+            const eventId = req.query.eventId as string | undefined;
+            
             const inscriptions = await this.inscriptionService.findAll({
                 userId: (req as AuthRequest).user.id,
                 eventId,

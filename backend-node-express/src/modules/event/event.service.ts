@@ -34,7 +34,7 @@ export class EventService {
     }
 
     let finalWhere: FindOptionsWhere<Event> | FindOptionsWhere<Event>[] = where;
-
+    
     if (search) {
       const searchLike = ILike(`%${search}%`);
       finalWhere = [
