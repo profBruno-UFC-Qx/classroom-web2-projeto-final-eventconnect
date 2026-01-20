@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const UserSchema = z.object({
-    id: z.string().uuid().optional(),
+    id: z.uuid().optional(),
     username: z
         .string()
         .min(3, 'Username deve ter no mínimo 3 caracteres'),

@@ -60,13 +60,3 @@ const router = createRouter({
 })
 
 export default router
-
-router.beforeEach((to, _) => {
-  const userStore = useUserStore()
-  if(to.meta.requiresAuth && !userStore.isAuthenticated) {
-    return '/login'
-  }
-  if(to.meta.requiresRole && to.meta.requiresRole !== userStore.role) {
-    return '/'
-  }
-})
