@@ -25,8 +25,8 @@ app.use(cors({
 }));
 
 AppDataSource.initialize()
-    .then(() => console.log("📦 Database connected"))
-    .catch((err) => console.error("❌ Error connecting database:", err));
+    .then(() => console.log("Database connected"))
+    .catch((err) => console.error("Error connecting database:", err));
 
 const openApiDocs = buildOpenAPIDocument();
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(openApiDocs));

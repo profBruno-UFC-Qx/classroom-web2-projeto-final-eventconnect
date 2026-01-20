@@ -10,9 +10,9 @@ export const AppDataSource = new DataSource({
     host: process.env.DB_HOST || "localhost",
     port: Number(process.env.DB_PORT) || 5432,
     username: process.env.DB_USER || "postgres",
-    password: process.env.DB_PASSWORD || "suasenha",
+    password: process.env.DB_PASSWORD || "senha",
     database: process.env.DB_NAME || "event_connector",
-    synchronize: true, // Automatically create database schema (use migrations in production)
+    synchronize: true,
     logging: true,
     // entities: ["src/modules/**/*.entity.ts"],
     entities: [User, Category, Inscription, Event]

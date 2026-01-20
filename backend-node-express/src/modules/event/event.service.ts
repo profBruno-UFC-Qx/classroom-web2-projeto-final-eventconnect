@@ -23,13 +23,13 @@ export class EventService {
       where.categoria = { id: categoryId };
     }
 
-    if (startDate && !isNaN(startDate.getTime())) {
-      if (endDate && !isNaN(endDate.getTime())) {
+    if (startDate && !Number.isNaN(startDate.getTime())) {
+      if (endDate && !Number.isNaN(endDate.getTime())) {
         where.data = Between(startDate, endDate);
       } else {
         where.data = MoreThanOrEqual(startDate);
       }
-    } else if (endDate && !isNaN(endDate.getTime())) {
+    } else if (endDate && !Number.isNaN(endDate.getTime())) {
       where.data = LessThanOrEqual(endDate);
     }
 
