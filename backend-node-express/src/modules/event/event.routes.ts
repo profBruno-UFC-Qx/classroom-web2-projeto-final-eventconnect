@@ -9,7 +9,7 @@ import {
   resSingleEntitySchema
 } from "../../shared/schemas.js"
 import { authMiddleware } from "../../middlewares/authMiddleware.js"
-import { requireAdminMiddleware } from "../../middlewares/requireAdminMiddleware.js"
+import { authAdminMiddleware } from "../../middlewares/authMiddleware.js"
 
 const eventRouter = Router()
 
@@ -118,16 +118,14 @@ eventRouter.get("/", eventController.index)
 
 eventRouter.post(
   "/",
-  authMiddleware,
-  requireAdminMiddleware,
+  authAdminMiddleware,
   validateBody(createEventSchema),
   eventController.store
 )
 
 eventRouter.put(
   "/:id",
-  authMiddleware,
-  requireAdminMiddleware,
+  authAdminMiddleware,
   validateParams(idSchema),
   validateBody(updateEventSchema),
   eventController.update
@@ -135,8 +133,7 @@ eventRouter.put(
 
 eventRouter.delete(
   "/:id",
-  authMiddleware,
-  requireAdminMiddleware,
+  authAdminMiddleware,
   validateParams(idSchema),
   eventController.delete
 )

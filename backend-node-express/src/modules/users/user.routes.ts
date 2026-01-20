@@ -3,16 +3,10 @@ import { getMe, login, register } from "./user.controller.js";
 import { registry } from "../../docs/openapi.js";
 import { resSingleEntitySchema } from "../../shared/schemas.js";
 import { authMiddleware } from "../../middlewares/authMiddleware.js";
-import { UserPublicSchema, UserSchema, LoginSchema } from "./user.schema.js";
+import { UserPublicSchema, LoginSchema, RegisterBodySchema } from "./user.schema.js";
 
 export const authRouter = Router();
 const userRouter = Router();
-
-const RegisterBodySchema = UserSchema.pick({
-  username: true,
-  email: true,
-  password: true,
-});
 
 registry.registerPath({
   method: "post",
@@ -67,7 +61,7 @@ registry.registerPath({
 authRouter.post("/register", register);
 authRouter.post("/login", login);
 
-// --- /users/me ---
+// /users/me
 registry.registerPath({
   method: "get",
   path: "/users/me",

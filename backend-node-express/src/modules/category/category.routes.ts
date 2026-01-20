@@ -5,7 +5,7 @@ import { createCategorySchema, updateCategorySchema } from './category.schema.js
 import { registry } from '../../docs/openapi.js';
 import { idSchema, resCollectionEntitySchema, resSingleEntitySchema } from '../../shared/schemas.js';
 import { authMiddleware } from '../../middlewares/authMiddleware.js';
-import { requireAdminMiddleware } from '../../middlewares/requireAdminMiddleware.js';
+import { authAdminMiddleware } from '../../middlewares/authMiddleware.js';
 
 const categoryRouter = Router();
 
@@ -98,16 +98,14 @@ categoryRouter.get('/', categoryController.index);
 
 categoryRouter.post(
   '/',
-  authMiddleware,
-  requireAdminMiddleware,
+  authAdminMiddleware,
   validateBody(createCategorySchema),
   categoryController.store
 );
 
 categoryRouter.put(
   '/:id',
-  authMiddleware,
-  requireAdminMiddleware,
+  authAdminMiddleware,
   validateParams(idSchema),
   validateBody(updateCategorySchema),
   categoryController.update
@@ -115,8 +113,7 @@ categoryRouter.put(
 
 categoryRouter.delete(
   '/:id',
-  authMiddleware,
-  requireAdminMiddleware,
+  authAdminMiddleware,
   validateParams(idSchema),
   categoryController.delete
 );
