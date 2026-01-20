@@ -3,7 +3,7 @@ import { User } from "./user.entity.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || "sua_chave_secreta_aqui";
+const JWT_SECRET = process.env.JWT_SECRET || "chave_secreta";
 
 export class UserService {
   async getMe(userId: string): Promise<User> {

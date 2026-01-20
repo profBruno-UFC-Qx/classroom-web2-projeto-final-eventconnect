@@ -7,8 +7,7 @@ import swaggerUi from 'swagger-ui-express';
 import { handlerError } from "./middlewares/errorMiddleware.js";
 import { AppDataSource } from './config/datasource.js';
 
-import userRouter from './modules/users/user.routes.js';
-import authRouter from "./modules/users/user.auth.routes.js";
+import userRouter, { authRouter } from './modules/users/user.routes.js';
 import eventRouter from "./modules/event/event.routes.js";
 import categoryRouter from "./modules/category/category.routes.js";
 import inscriptionRouter from "./modules/inscription/inscription.routes.js";
