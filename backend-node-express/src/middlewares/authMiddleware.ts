@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { userRepository } from '../modules/users/user.repository.js';
 
 interface AuthRequest extends Request {
     user?: {
@@ -7,7 +8,7 @@ interface AuthRequest extends Request {
     };
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || "sua_chave_secreta_aqui";
+const JWT_SECRET = process.env.JWT_SECRET || "chave_secreta";
 
 export const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization;
@@ -46,4 +47,34 @@ export const authMiddleware = (req: AuthRequest, res: Response, next: NextFuncti
             message: 'Token inválido ou expirado'
         });
     }
+};
+
+export const authAdminMiddleware = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    authMiddleware(req, res, async (err?: any) => {
+        if (err) return next(err);
+
+        try {
+            if (!req.user?.id) {
+                return res.status(401).json({ success: false, message: "Não autenticado" });
+            }
+
+            const user = await userRepository.findOne({ where: { id: req.user.id } });
+
+            if (!user) {
+                return res.status(401).json({ success: false, message: "Não autenticado" });
+            }
+
+            if (user.blocked) {
+                return res.status(403).json({ success: false, message: "Usuário bloqueado" });
+            }
+
+            if (user.role !== "Admin") {
+                return res.status(403).json({ success: false, message: "Acesso restrito (Admin)" });
+            }
+
+            return next();
+        } catch (e) {
+            return next(e);
+        }
+    });
 };

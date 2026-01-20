@@ -20,6 +20,13 @@ export const UserSchema = z.object({
 
 export const UserPublicSchema = UserSchema.omit({ password: true });
 
+export const RegisterBodySchema = UserSchema.pick({
+  username: true,
+  email: true,
+  password: true,
+});
+
+
 export const LoginSchema = z.object({
   email: z.email("Email inválido"),
   password: z.string().min(6, "Senha é obrigatória"),
@@ -27,4 +34,5 @@ export const LoginSchema = z.object({
 
 export type UserType = z.infer<typeof UserSchema>;
 export type UserPublicType = z.infer<typeof UserPublicSchema>;
+export type RegisterType = z.infer<typeof RegisterBodySchema>;
 export type LoginType = z.infer<typeof LoginSchema>;
